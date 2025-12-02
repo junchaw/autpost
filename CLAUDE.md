@@ -10,13 +10,22 @@ Autpost is a full-stack application built with Laravel (backend) and React + Vit
 
 **Backend:**
 - Laravel 12 (PHP 8.5)
-- PostgreSQL (configured, currently using SQLite for development)
+- PostgreSQL (production) / SQLite (development)
 - Laravel Sanctum (API authentication)
 
 **Frontend:**
 - React 18 with TypeScript
 - Vite (build tool and dev server)
+- **Tailwind CSS v4** - Utility-first CSS framework with CSS variables for theming
+- **shadcn/ui** - Re-usable component library built with Radix UI and Tailwind CSS
+- **lucide-react** - Icon library (used for dark mode toggle icons)
 - API client utility in `frontend/src/lib/api.ts`
+
+**UI/Styling:**
+- Components located in `frontend/src/components/ui/` (Button, Card, Textarea, Label)
+- Custom hook for theme management: `frontend/src/hooks/useTheme.ts`
+- Dark/Light mode toggle with persistent localStorage preferences
+- CSS variables defined in `frontend/src/index.css` using Tailwind v4 `@theme` syntax
 
 ## Repository Structure
 

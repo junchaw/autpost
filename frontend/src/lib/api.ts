@@ -1,5 +1,9 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+export interface DashboardConfig {
+  panels: Array<{ panel: string }>;
+}
+
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_URL}/api${endpoint}`;
 
@@ -21,4 +25,15 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
 
 export const api = {
   health: () => fetchApi<{ status: string; timestamp: string }>('/health'),
+
+  config: {
+    get: (userId = 'default') =>
+      fetchApi<{ config: DashboardConfig }>(`/config?user_id=${userId}`),
+
+    update: (config: DashboardConfig, userId = 'default') =>
+      fetchApi<{ message: string; config: DashboardConfig }>('/config', {
+        method: 'POST',
+        body: JSON.stringify({ config, user_id: userId }),
+      }),
+  },
 };
