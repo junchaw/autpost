@@ -18,11 +18,15 @@ Autpost is a full-stack application built with Laravel (backend) and React + Vit
 - Vite (build tool and dev server)
 - **Tailwind CSS v4** - Utility-first CSS framework with CSS variables for theming
 - **shadcn/ui** - Re-usable component library built with Radix UI and Tailwind CSS
+- **Chakra UI** - Component library for modals, dialogs, and other interactive elements
 - **lucide-react** - Icon library (used for dark mode toggle icons)
 - API client utility in `frontend/src/lib/api.ts`
 
 **UI/Styling:**
-- Components located in `frontend/src/components/ui/` (Button, Card, Textarea, Label)
+- **Hybrid UI Library Approach**: The project uses both shadcn/ui and Chakra UI
+  - **shadcn/ui**: Used for basic components (Button, Card, Textarea, Label, etc.) in `frontend/src/components/ui/`
+  - **Chakra UI**: Used for complex interactive components (Modal, Dialog, Overlay, etc.)
+  - App is wrapped in `ChakraProvider` in `frontend/src/App.tsx`
 - Custom hook for theme management: `frontend/src/hooks/useTheme.ts`
 - Dark/Light mode toggle with persistent localStorage preferences
 - CSS variables defined in `frontend/src/index.css` using Tailwind v4 `@theme` syntax

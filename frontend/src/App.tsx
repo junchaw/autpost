@@ -1,11 +1,14 @@
 import './App.css'
+import { ChakraProvider } from '@chakra-ui/react'
 import { Dashboard } from './components/Dashboard'
 
 function App() {
   return (
-    <div className="App">
-      <Dashboard />
-    </div>
+    <ChakraProvider>
+      <div className="App">
+        <Dashboard />
+      </div>
+    </ChakraProvider>
   )
 }
 
