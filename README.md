@@ -18,6 +18,7 @@ A full-stack application built with Laravel (backend API) and React + Vite (fron
 ### Setup
 
 1. **Backend:**
+
 ```bash
 cd backend
 composer install
@@ -28,8 +29,8 @@ php artisan serve
 ```
 
 2. **Frontend:**
+
 ```bash
-cd frontend
 npm install
 npm run dev
 ```
@@ -43,4 +44,4 @@ See [CLAUDE.md](./CLAUDE.md) for detailed development instructions, architecture
 ## Project Structure
 
 - `backend/` - Laravel REST API
-- `frontend/` - React + Vite SPA
+- Root level - React + Vite SPA (src/, vite.config.ts, package.json, etc.)

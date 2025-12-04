@@ -8,28 +8,13 @@ Autpost is a full-stack application built with Laravel (backend) and React + Vit
 
 ## Tech Stack
 
-**Backend:**
-- Laravel 12 (PHP 8.5)
-- PostgreSQL (production) / SQLite (development)
-- Laravel Sanctum (API authentication)
+**Backend:** Laravel 12 (PHP 8.5), PostgreSQL/SQLite, Laravel Sanctum
 
-**Frontend:**
-- React 18 with TypeScript
-- Vite (build tool and dev server)
-- **Tailwind CSS v4** - Utility-first CSS framework with CSS variables for theming
-- **shadcn/ui** - Re-usable component library built with Radix UI and Tailwind CSS
-- **Chakra UI** - Component library for modals, dialogs, and other interactive elements
-- **lucide-react** - Icon library (used for dark mode toggle icons)
-- API client utility in `frontend/src/lib/api.ts`
+**Frontend:** React 18, TypeScript, Vite, pnpm, Tailwind CSS v4, shadcn/ui, DaisyUI
 
-**UI/Styling:**
-- **Hybrid UI Library Approach**: The project uses both shadcn/ui and Chakra UI
-  - **shadcn/ui**: Used for basic components (Button, Card, Textarea, Label, etc.) in `frontend/src/components/ui/`
-  - **Chakra UI**: Used for complex interactive components (Modal, Dialog, Overlay, etc.)
-  - App is wrapped in `ChakraProvider` in `frontend/src/App.tsx`
-- Custom hook for theme management: `frontend/src/hooks/useTheme.ts`
-- Dark/Light mode toggle with persistent localStorage preferences
-- CSS variables defined in `frontend/src/index.css` using Tailwind v4 `@theme` syntax
+**UI/Styling:** Hybrid approach using shadcn/ui for basic components and DaisyUI for styled components
+
+For complete technology documentation and package details, see **[docs/INDEX.md](docs/INDEX.md)** and **[docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)**
 
 ## Repository Structure
 
@@ -43,89 +28,41 @@ autpost/
 │   ├── database/     # Migrations and seeders
 │   ├── config/       # Configuration files
 │   └── .env          # Environment configuration
-└── frontend/         # React + Vite app
-    ├── src/
-    │   ├── lib/      # Utilities (API client)
-    │   └── App.tsx   # Main component
-    ├── .env          # Frontend environment variables
-    └── vite.config.ts
+├── src/              # React + Vite app (root level)
+│   ├── lib/          # Utilities (API client)
+│   └── App.tsx       # Main component
+├── .env              # Frontend environment variables
+└── vite.config.ts    # Vite configuration
 ```
 
-## Development Commands
+## Quick Start
 
-### Backend (Laravel)
+### Using Makefile (Recommended)
 
-**Start development server:**
+```bash
+make help      # Show all available commands
+make install   # Install all dependencies
+make dev       # Start both servers
+```
+
+### Manual Setup
+
+**Backend:**
+
 ```bash
 cd backend
-php artisan serve
-# Runs on http://localhost:8000
+composer install
+php artisan serve  # http://localhost:8000
 ```
 
-**Database migrations:**
+**Frontend:**
+
 ```bash
-cd backend
-php artisan migrate              # Run migrations
-php artisan migrate:fresh        # Drop all tables and re-run migrations
-php artisan migrate:rollback     # Rollback last migration
+pnpm install
+pnpm run dev  # http://localhost:5173
 ```
 
-**Create new migration:**
-```bash
-cd backend
-php artisan make:migration create_table_name
-```
-
-**Create new controller:**
-```bash
-cd backend
-php artisan make:controller ControllerName
-```
-
-**Run tests:**
-```bash
-cd backend
-php artisan test
-```
-
-**Code formatting (Laravel Pint):**
-```bash
-cd backend
-./vendor/bin/pint
-```
-
-### Frontend (React + Vite)
-
-**Start development server:**
-```bash
-cd frontend
-npm run dev
-# Runs on http://localhost:5173
-```
-
-**Build for production:**
-```bash
-cd frontend
-npm run build
-```
-
-**Preview production build:**
-```bash
-cd frontend
-npm run preview
-```
-
-**Type checking:**
-```bash
-cd frontend
-npm run tsc
-```
-
-**Linting:**
-```bash
-cd frontend
-npm run lint
-```
+For complete command reference, see **[docs/INDEX.md](docs/INDEX.md)** or run `make help`
 
 ## Architecture
 
@@ -137,21 +74,23 @@ npm run lint
 - Authentication uses Laravel Sanctum (token-based)
 
 **Example API endpoint:**
+
 - Health check: `GET /api/health`
 - Returns: `{"status": "ok", "timestamp": "..."}`
 
 ### Frontend API Client
 
-- API client utility: `frontend/src/lib/api.ts`
+- API client utility: `src/lib/api.ts`
 - Base URL configured via `VITE_API_URL` environment variable
 - All requests automatically include JSON headers
 - Centralized error handling
 
 **Usage example:**
-```typescript
-import { api } from './lib/api'
 
-const data = await api.health()
+```typescript
+import { api } from './lib/api';
+
+const data = await api.health();
 ```
 
 ## Database
@@ -161,17 +100,20 @@ const data = await api.health()
 **PostgreSQL setup (recommended for production):**
 
 1. Install PostgreSQL:
+
 ```bash
 brew install postgresql
 brew services start postgresql
 ```
 
 2. Create database:
+
 ```bash
 createdb autpost
 ```
 
 3. Update `backend/.env`:
+
 ```env
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
@@ -182,6 +124,7 @@ DB_PASSWORD=
 ```
 
 4. Run migrations:
+
 ```bash
 cd backend
 php artisan migrate
@@ -192,13 +135,15 @@ php artisan migrate
 ### Backend (.env)
 
 Key variables in `backend/.env`:
+
 - `APP_URL=http://localhost:8000` - Backend URL
 - `DB_CONNECTION=sqlite` - Database driver
 - `FRONTEND_URL=http://localhost:5173` - Frontend URL for CORS
 
 ### Frontend (.env)
 
-Key variables in `frontend/.env`:
+Key variables in `.env` (root level):
+
 - `VITE_API_URL=http://localhost:8000` - Backend API URL
 
 ## Running Both Servers
@@ -206,15 +151,23 @@ Key variables in `frontend/.env`:
 Open two terminal windows:
 
 **Terminal 1 (Backend):**
+
 ```bash
 cd backend
 php artisan serve
 ```
 
 **Terminal 2 (Frontend):**
+
 ```bash
-cd frontend
-npm run dev
+pnpm run dev
 ```
 
 Then visit http://localhost:5173 to see the frontend, which will communicate with the backend API at http://localhost:8000.
+
+## Documentation
+
+For comprehensive documentation, commands, and package references:
+
+- **[docs/INDEX.md](docs/INDEX.md)** - Main documentation hub with quick links, commands, and technology references
+- **[docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)** - Complete list of all PHP and JavaScript dependencies with links
