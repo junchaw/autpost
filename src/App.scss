@@ -1,0 +1,11 @@
+.panel-width-wrapper {
+  width: var(--width-sm);
+
+  @media (min-width: 768px) {
+    width: var(--width-md);
+  }
+
+  @media (min-width: 1024px) {
+    width: var(--width-lg);
+  }
+}

@@ -1,7 +1,23 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+export type WidthMode = 'column' | 'fixed';
+export type ScreenSize = 'sm' | 'md' | 'lg';
+
+export interface ResponsiveSize {
+  widthMode: WidthMode;
+  width: number;
+  height: number;
+}
+
+export interface PanelConfig {
+  panel: string;
+  sm?: ResponsiveSize;
+  md?: ResponsiveSize;
+  lg?: ResponsiveSize;
+}
+
 export interface DashboardConfig {
-  panels: Array<{ panel: string; width?: number }>;
+  panels: PanelConfig[];
 }
 
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {

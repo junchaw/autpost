@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Edit, Check } from 'lucide-react';
 import { api } from '../lib/api';
-import type { DashboardConfig } from '../lib/api';
+import type { DashboardConfig, PanelConfig, ResponsiveSize } from '../lib/api';
+import { DEFAULT_SIZES } from './PanelWrapper';
 import { Base64EncodeDecodePanel } from './panels/Base64EncodeDecodePanel';
 import { Base64SimultaneousPanel } from './panels/Base64SimultaneousPanel';
 import { URLEncodeDecodePanel } from './panels/URLEncodeDecodePanel';
@@ -19,37 +20,6 @@ import { QRCodePanel } from './panels/QRCodePanel';
 import { AddPanelDialog } from './AddPanelDialog';
 import { Banner } from './Banner';
 import { PanelWrapper } from './PanelWrapper';
-
-// Helper function to get the col-span class based on width
-const getColSpanClass = (width: number): string => {
-  const classes: Record<number, string> = {
-    1: 'col-span-1',
-    2: 'col-span-2',
-    3: 'col-span-3',
-    4: 'col-span-4',
-    5: 'col-span-5',
-    6: 'col-span-6',
-    7: 'col-span-7',
-    8: 'col-span-8',
-    9: 'col-span-9',
-    10: 'col-span-10',
-    11: 'col-span-11',
-    12: 'col-span-12',
-    13: 'col-span-13',
-    14: 'col-span-14',
-    15: 'col-span-15',
-    16: 'col-span-16',
-    17: 'col-span-17',
-    18: 'col-span-18',
-    19: 'col-span-19',
-    20: 'col-span-20',
-    21: 'col-span-21',
-    22: 'col-span-22',
-    23: 'col-span-23',
-    24: 'col-span-24',
-  };
-  return classes[width] || 'col-span-8';
-};
 
 export function Dashboard() {
   const [config, setConfig] = useState<DashboardConfig>({ panels: [] });
@@ -77,7 +47,15 @@ export function Dashboard() {
   const addPanel = async (panelType: string) => {
     const newConfig: DashboardConfig = {
       ...config,
-      panels: [...config.panels, { panel: panelType, width: 8 }],
+      panels: [
+        ...config.panels,
+        {
+          panel: panelType,
+          sm: DEFAULT_SIZES.sm,
+          md: DEFAULT_SIZES.md,
+          lg: DEFAULT_SIZES.lg,
+        },
+      ],
     };
 
     try {
@@ -89,11 +67,21 @@ export function Dashboard() {
     }
   };
 
-  const updatePanelConfig = async (index: number, panelConfig: { width: number }) => {
+  const updatePanelConfig = async (
+    index: number,
+    panelConfig: { sm: ResponsiveSize; md: ResponsiveSize; lg: ResponsiveSize }
+  ) => {
     const newConfig: DashboardConfig = {
       ...config,
       panels: config.panels.map((panel, i) =>
-        i === index ? { ...panel, width: panelConfig.width } : panel
+        i === index
+          ? {
+              ...panel,
+              sm: panelConfig.sm,
+              md: panelConfig.md,
+              lg: panelConfig.lg,
+            }
+          : panel
       ),
     };
 
@@ -156,10 +144,11 @@ export function Dashboard() {
     }
   };
 
-  const renderPanel = (panelConfig: { panel: string; width?: number }, index: number) => {
+  const renderPanel = (panelConfig: PanelConfig, index: number) => {
     const handleRemove = editMode ? () => removePanel(index) : undefined;
     const handleConfigChange = editMode
-      ? (config: { width: number }) => updatePanelConfig(index, config)
+      ? (config: { sm: ResponsiveSize; md: ResponsiveSize; lg: ResponsiveSize }) =>
+          updatePanelConfig(index, config)
       : undefined;
 
     let panel;
@@ -223,7 +212,9 @@ export function Dashboard() {
       <PanelWrapper
         key={index}
         title={getPanelTitle(panelConfig.panel)}
-        width={panelConfig.width || 8}
+        sm={panelConfig.sm}
+        md={panelConfig.md}
+        lg={panelConfig.lg}
         onRemove={handleRemove}
         onConfigChange={handleConfigChange}
       >
@@ -274,11 +265,32 @@ export function Dashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-24 gap-6">
+        <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4">
           {config.panels.map((panel, index) => {
-            const width = panel.width || 8;
+            const sm = panel.sm || DEFAULT_SIZES.sm;
+            const md = panel.md || DEFAULT_SIZES.md;
+            const lg = panel.lg || DEFAULT_SIZES.lg;
+
+            const getWidthStyle = (size: ResponsiveSize, gapRem: number) => {
+              if (size.widthMode === 'fixed') {
+                return `${size.width}px`;
+              }
+              const percentage = (size.width / 24) * 100;
+              return `calc(${percentage}% - ${gapRem}rem * ${(24 - size.width) / 24})`;
+            };
+
             return (
-              <div key={index} className={getColSpanClass(width)}>
+              <div
+                key={index}
+                className="panel-width-wrapper"
+                style={
+                  {
+                    '--width-sm': getWidthStyle(sm, 0.5),
+                    '--width-md': getWidthStyle(md, 0.75),
+                    '--width-lg': getWidthStyle(lg, 1),
+                  } as React.CSSProperties
+                }
+              >
                 {renderPanel(panel, index)}
               </div>
             );

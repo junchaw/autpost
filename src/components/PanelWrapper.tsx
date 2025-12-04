@@ -1,23 +1,41 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { X, Settings, Check } from 'lucide-react';
+import type { WidthMode, ScreenSize, ResponsiveSize } from '../lib/api';
 
 interface PanelWrapperProps {
   title: string;
   children: React.ReactNode;
-  width?: number;
+  sm?: ResponsiveSize;
+  md?: ResponsiveSize;
+  lg?: ResponsiveSize;
   onRemove?: () => void;
-  onConfigChange?: (config: { width: number }) => void;
+  onConfigChange?: (config: { sm: ResponsiveSize; md: ResponsiveSize; lg: ResponsiveSize }) => void;
 }
+
+const DEFAULT_SIZES: Record<ScreenSize, ResponsiveSize> = {
+  sm: { widthMode: 'column', width: 24, height: 300 },
+  md: { widthMode: 'column', width: 12, height: 400 },
+  lg: { widthMode: 'column', width: 8, height: 400 },
+};
+
+const SCREEN_SIZE_LABELS: Record<ScreenSize, string> = {
+  sm: 'Small (mobile devices)',
+  md: 'Medium (tablets)',
+  lg: 'Large (desktops)',
+};
 
 export function PanelWrapper({
   title,
   children,
-  width = 8,
+  sm = DEFAULT_SIZES.sm,
+  md = DEFAULT_SIZES.md,
+  lg = DEFAULT_SIZES.lg,
   onRemove,
   onConfigChange,
 }: PanelWrapperProps) {
+  const panelId = useId().replace(/:/g, '-');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tempWidth, setTempWidth] = useState(width);
+  const [tempSizes, setTempSizes] = useState<Record<ScreenSize, ResponsiveSize>>({ sm, md, lg });
   const [confirmRemove, setConfirmRemove] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -45,23 +63,48 @@ export function PanelWrapper({
   };
 
   const handleEdit = () => {
-    setTempWidth(width);
+    setTempSizes({ sm, md, lg });
     setIsModalOpen(true);
   };
 
   const handleSave = () => {
-    onConfigChange?.({ width: tempWidth });
+    onConfigChange?.(tempSizes);
     setIsModalOpen(false);
   };
 
   const handleCancel = () => {
-    setTempWidth(width);
+    setTempSizes({ sm, md, lg });
     setIsModalOpen(false);
   };
 
+  const updateTempSize = (screen: ScreenSize, updates: Partial<ResponsiveSize>) => {
+    setTempSizes((prev) => ({
+      ...prev,
+      [screen]: { ...prev[screen], ...updates },
+    }));
+  };
+
+  const handleWidthModeToggle = (screen: ScreenSize) => {
+    const current = tempSizes[screen];
+    const newMode: WidthMode = current.widthMode === 'column' ? 'fixed' : 'column';
+    updateTempSize(screen, {
+      widthMode: newMode,
+      width: newMode === 'column' ? 12 : 400,
+    });
+  };
+
+  const panelClass = `panel-${panelId}`;
+
   return (
-    <div className="group card relative bg-base-200 shadow-sm">
-      <div className="card-body">
+    <div
+      className={`group card-xs sm:card-sm md:card relative bg-base-200 shadow-sm ${panelClass}`}
+    >
+      <style>{`
+        .${panelClass} { height: ${sm.height}px; }
+        @media (min-width: 768px) { .${panelClass} { height: ${md.height}px; } }
+        @media (min-width: 1024px) { .${panelClass} { height: ${lg.height}px; } }
+      `}</style>
+      <div className="card-body overflow-auto">
         <h2 className="card-title">{title}</h2>
         {children}
       </div>
@@ -93,32 +136,71 @@ export function PanelWrapper({
       {/* Modal */}
       {isModalOpen && (
         <dialog className="modal modal-open">
-          <div className="modal-box">
+          <div className="modal-box max-w-2xl">
             <h3 className="font-bold text-lg mb-4">Panel Settings</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="label">
-                  <span className="label-text">Panel Width (1-24 columns)</span>
-                  <span className="label-text-alt">{tempWidth}</span>
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="24"
-                  value={tempWidth}
-                  onChange={(e) => setTempWidth(Number(e.target.value))}
-                  className="range range-primary w-full"
-                  step="1"
-                />
-                <div className="w-full flex justify-between text-xs px-2 mt-2">
-                  <span>1</span>
-                  <span>6</span>
-                  <span>12</span>
-                  <span>18</span>
-                  <span>24</span>
-                </div>
-              </div>
+
+            <div className="space-y-6">
+              {(['sm', 'md', 'lg'] as ScreenSize[]).map((size) => {
+                const sizeConfig = tempSizes[size];
+                return (
+                  <div key={size} className="border border-base-300 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-medium">{SCREEN_SIZE_LABELS[size]}</span>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <span className="text-sm text-base-content/70">Column</span>
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary toggle-sm"
+                          checked={sizeConfig.widthMode === 'fixed'}
+                          onChange={() => handleWidthModeToggle(size)}
+                        />
+                        <span className="text-sm text-base-content/70">Fixed</span>
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="label py-1">
+                          <span className="label-text text-xs">
+                            Width {sizeConfig.widthMode === 'column' ? '(columns)' : '(px)'}
+                          </span>
+                          <span className="label-text-alt text-xs">
+                            {sizeConfig.width}
+                            {sizeConfig.widthMode === 'column' ? '/24 cols' : 'px'}
+                          </span>
+                        </label>
+                        <input
+                          type="range"
+                          min={sizeConfig.widthMode === 'column' ? 1 : 100}
+                          max={sizeConfig.widthMode === 'column' ? 24 : 900}
+                          value={sizeConfig.width}
+                          onChange={(e) => updateTempSize(size, { width: Number(e.target.value) })}
+                          className="range range-primary range-xs w-full"
+                          step={sizeConfig.widthMode === 'column' ? 1 : 50}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="label py-1">
+                          <span className="label-text text-xs">Height (px)</span>
+                          <span className="label-text-alt text-xs">{sizeConfig.height}px</span>
+                        </label>
+                        <input
+                          type="range"
+                          min="100"
+                          max="900"
+                          value={sizeConfig.height}
+                          onChange={(e) => updateTempSize(size, { height: Number(e.target.value) })}
+                          className="range range-primary range-xs w-full"
+                          step="50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+
             <div className="modal-action">
               <button onClick={handleCancel} className="btn">
                 Cancel
@@ -134,3 +216,5 @@ export function PanelWrapper({
     </div>
   );
 }
+
+export { DEFAULT_SIZES };
