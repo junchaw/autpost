@@ -8,7 +8,7 @@ Autpost is a full-stack application built with Laravel (backend) and React + Vit
 
 ## Tech Stack
 
-**Backend:** Laravel 12 (PHP 8.5), PostgreSQL/SQLite, Laravel Sanctum
+**Backend:** Laravel 12 (PHP 8.4), PostgreSQL/SQLite, Laravel Sanctum
 
 **Frontend:** React 18, TypeScript, Vite, pnpm, Tailwind CSS v4, shadcn/ui, DaisyUI
 
@@ -170,4 +170,27 @@ Then visit http://localhost:5173 to see the frontend, which will communicate wit
 For comprehensive documentation, commands, and package references:
 
 - **[docs/INDEX.md](docs/INDEX.md)** - Main documentation hub with quick links, commands, and technology references
+- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development guidelines, API patterns, and conventions
 - **[docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)** - Complete list of all PHP and JavaScript dependencies with links
+
+## Important: Read Before Making Changes
+
+**Before adding new features or modifying existing code, read [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** to understand:
+
+- Soft delete implementation patterns
+- Standard CRUD API structure (list, create, get, update, delete, restore, hard delete)
+- Pagination response format
+- Frontend API client organization
+
+## Important: Update Dependencies Documentation
+
+**When adding new dependencies**, update [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) with:
+
+- Package name and version
+- Link to documentation
+- Brief description of what it's used for
+
+This applies to both:
+
+- PHP packages (via `composer require`)
+- JavaScript packages (via `pnpm add`)

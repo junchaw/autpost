@@ -4,44 +4,37 @@ A full-stack application built with Laravel (backend API) and React + Vite (fron
 
 ## Tech Stack
 
-- **Backend:** Laravel 12, PHP 8.5, PostgreSQL/SQLite, Laravel Sanctum
-- **Frontend:** React 18, TypeScript, Vite
+| Layer        | Technologies                                            |
+| ------------ | ------------------------------------------------------- |
+| **Backend**  | Laravel 12, PHP 8.4, PostgreSQL/SQLite, Laravel Sanctum |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, DaisyUI       |
 
 ## Quick Start
 
-### Prerequisites
-
-- PHP 8.1+ and Composer
-- Node.js 18+ and npm
-- PostgreSQL (optional, using SQLite by default)
-
-### Setup
-
-1. **Backend:**
-
 ```bash
-cd backend
-composer install
-cp .env.example .env  # If .env doesn't exist
-php artisan key:generate
-php artisan migrate
-php artisan serve
+# Using Docker (recommended)
+docker-compose up -d
 ```
 
-2. **Frontend:**
+Visit http://localhost:8080
 
-```bash
-npm install
-npm run dev
-```
-
-3. Visit http://localhost:5173
-
-## Development
-
-See [CLAUDE.md](./CLAUDE.md) for detailed development instructions, architecture overview, and common commands.
+For local development setup, see [Local Environment](./docs/LOCAL_ENVIRONMENT.md).
 
 ## Project Structure
 
-- `backend/` - Laravel REST API
-- Root level - React + Vite SPA (src/, vite.config.ts, package.json, etc.)
+```
+autpost/
+├── backend/           # Laravel REST API
+├── src/               # React + Vite SPA
+├── docs/              # Documentation
+├── docker/            # Docker configuration
+```
+
+## Documentation
+
+| Document                                         | Description                     |
+| ------------------------------------------------ | ------------------------------- |
+| [Local Environment](./docs/LOCAL_ENVIRONMENT.md) | Local development setup         |
+| [Deployment](./docs/DEPLOYMENT.md)               | Production deployment and CI/CD |
+| [Development Guide](./docs/DEVELOPMENT_GUIDE.md) | API patterns and conventions    |
+| [Dependencies](./docs/DEPENDENCIES.md)           | PHP and JS dependencies         |

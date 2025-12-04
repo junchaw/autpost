@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useId } from 'react';
+import { useState, useEffect, useRef, useId, useCallback } from 'react';
 import { X, Settings, Check } from 'lucide-react';
 import type { WidthMode, ScreenSize, ResponsiveSize } from '../lib/api';
 
@@ -38,6 +38,7 @@ export function PanelWrapper({
   const [tempSizes, setTempSizes] = useState<Record<ScreenSize, ResponsiveSize>>({ sm, md, lg });
   const [confirmRemove, setConfirmRemove] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     if (confirmRemove) {
@@ -54,6 +55,32 @@ export function PanelWrapper({
     }
   }, [confirmRemove]);
 
+  // Dialog open/close effect
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    if (isModalOpen) {
+      dialog.showModal();
+    } else {
+      dialog.close();
+    }
+  }, [isModalOpen]);
+
+  const handleModalClose = useCallback(() => {
+    setTempSizes({ sm, md, lg });
+    setIsModalOpen(false);
+  }, [sm, md, lg]);
+
+  // Handle native dialog close (e.g., Escape key)
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    dialog.addEventListener('close', handleModalClose);
+    return () => dialog.removeEventListener('close', handleModalClose);
+  }, [handleModalClose]);
+
   const handleRemoveClick = () => {
     if (confirmRemove) {
       onRemove?.();
@@ -69,11 +96,6 @@ export function PanelWrapper({
 
   const handleSave = () => {
     onConfigChange?.(tempSizes);
-    setIsModalOpen(false);
-  };
-
-  const handleCancel = () => {
-    setTempSizes({ sm, md, lg });
     setIsModalOpen(false);
   };
 
@@ -134,85 +156,85 @@ export function PanelWrapper({
       )}
 
       {/* Modal */}
-      {isModalOpen && (
-        <dialog className="modal modal-open">
-          <div className="modal-box max-w-2xl">
-            <h3 className="font-bold text-lg mb-4">Panel Settings</h3>
+      <dialog ref={dialogRef} className="modal">
+        <div className="modal-box max-w-2xl">
+          <h3 className="font-bold text-lg mb-4">Panel Settings</h3>
 
-            <div className="space-y-6">
-              {(['sm', 'md', 'lg'] as ScreenSize[]).map((size) => {
-                const sizeConfig = tempSizes[size];
-                return (
-                  <div key={size} className="border border-base-300 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium">{SCREEN_SIZE_LABELS[size]}</span>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <span className="text-sm text-base-content/70">Column</span>
-                        <input
-                          type="checkbox"
-                          className="toggle toggle-primary toggle-sm"
-                          checked={sizeConfig.widthMode === 'fixed'}
-                          onChange={() => handleWidthModeToggle(size)}
-                        />
-                        <span className="text-sm text-base-content/70">Fixed</span>
+          <div className="space-y-6">
+            {(['sm', 'md', 'lg'] as ScreenSize[]).map((size) => {
+              const sizeConfig = tempSizes[size];
+              return (
+                <div key={size} className="border border-base-300 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-medium">{SCREEN_SIZE_LABELS[size]}</span>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <span className="text-sm text-base-content/70">Column</span>
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-primary toggle-sm"
+                        checked={sizeConfig.widthMode === 'fixed'}
+                        onChange={() => handleWidthModeToggle(size)}
+                      />
+                      <span className="text-sm text-base-content/70">Fixed</span>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="label py-1">
+                        <span className="label-text text-xs">
+                          Width {sizeConfig.widthMode === 'column' ? '(columns)' : '(px)'}
+                        </span>
+                        <span className="label-text-alt text-xs">
+                          {sizeConfig.width}
+                          {sizeConfig.widthMode === 'column' ? '/24 cols' : 'px'}
+                        </span>
                       </label>
+                      <input
+                        type="range"
+                        min={sizeConfig.widthMode === 'column' ? 1 : 100}
+                        max={sizeConfig.widthMode === 'column' ? 24 : 900}
+                        value={sizeConfig.width}
+                        onChange={(e) => updateTempSize(size, { width: Number(e.target.value) })}
+                        className="range range-primary range-xs w-full"
+                        step={sizeConfig.widthMode === 'column' ? 1 : 50}
+                      />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="label py-1">
-                          <span className="label-text text-xs">
-                            Width {sizeConfig.widthMode === 'column' ? '(columns)' : '(px)'}
-                          </span>
-                          <span className="label-text-alt text-xs">
-                            {sizeConfig.width}
-                            {sizeConfig.widthMode === 'column' ? '/24 cols' : 'px'}
-                          </span>
-                        </label>
-                        <input
-                          type="range"
-                          min={sizeConfig.widthMode === 'column' ? 1 : 100}
-                          max={sizeConfig.widthMode === 'column' ? 24 : 900}
-                          value={sizeConfig.width}
-                          onChange={(e) => updateTempSize(size, { width: Number(e.target.value) })}
-                          className="range range-primary range-xs w-full"
-                          step={sizeConfig.widthMode === 'column' ? 1 : 50}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="label py-1">
-                          <span className="label-text text-xs">Height (px)</span>
-                          <span className="label-text-alt text-xs">{sizeConfig.height}px</span>
-                        </label>
-                        <input
-                          type="range"
-                          min="100"
-                          max="900"
-                          value={sizeConfig.height}
-                          onChange={(e) => updateTempSize(size, { height: Number(e.target.value) })}
-                          className="range range-primary range-xs w-full"
-                          step="50"
-                        />
-                      </div>
+                    <div>
+                      <label className="label py-1">
+                        <span className="label-text text-xs">Height (px)</span>
+                        <span className="label-text-alt text-xs">{sizeConfig.height}px</span>
+                      </label>
+                      <input
+                        type="range"
+                        min="100"
+                        max="900"
+                        value={sizeConfig.height}
+                        onChange={(e) => updateTempSize(size, { height: Number(e.target.value) })}
+                        className="range range-primary range-xs w-full"
+                        step="50"
+                      />
                     </div>
                   </div>
-                );
-              })}
-            </div>
-
-            <div className="modal-action">
-              <button onClick={handleCancel} className="btn">
-                Cancel
-              </button>
-              <button onClick={handleSave} className="btn btn-primary">
-                Save
-              </button>
-            </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="modal-backdrop" onClick={handleCancel}></div>
-        </dialog>
-      )}
+
+          <div className="modal-action">
+            <button onClick={handleModalClose} className="btn">
+              Cancel
+            </button>
+            <button onClick={handleSave} className="btn btn-primary">
+              Save
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
     </div>
   );
 }

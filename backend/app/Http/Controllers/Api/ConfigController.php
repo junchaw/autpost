@@ -13,21 +13,21 @@ class ConfigController extends Controller
      */
     public function show(Request $request)
     {
-        $userId = $request->input('user_id', 'default');
+        $userId = $request->user()->id;
 
         $userConfig = UserConfig::where('user_id', $userId)->first();
 
-        if (!$userConfig) {
+        if (! $userConfig) {
             // Return default config if none exists
             return response()->json([
                 'config' => [
-                    'panels' => []
-                ]
+                    'panels' => [],
+                ],
             ]);
         }
 
         return response()->json([
-            'config' => $userConfig->config
+            'config' => $userConfig->config,
         ]);
     }
 
@@ -40,7 +40,7 @@ class ConfigController extends Controller
             'config' => 'required|array',
         ]);
 
-        $userId = $request->input('user_id', 'default');
+        $userId = $request->user()->id;
 
         $userConfig = UserConfig::updateOrCreate(
             ['user_id' => $userId],
@@ -49,7 +49,7 @@ class ConfigController extends Controller
 
         return response()->json([
             'message' => 'Configuration updated successfully',
-            'config' => $userConfig->config
+            'config' => $userConfig->config,
         ]);
     }
 }

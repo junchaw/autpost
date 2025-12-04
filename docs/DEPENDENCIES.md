@@ -24,15 +24,18 @@
 
 - **[react](https://react.dev)** - UI framework
 - **[react-dom](https://react.dev)** - React DOM rendering
+- **[react-router-dom](https://reactrouter.com)** - Client-side routing
 - **[react-qr-code](https://github.com/rosskhanas/react-qr-code)** - QR code generator component
 - **[@radix-ui/react-dialog](https://radix-ui.com)** - Accessible dialog primitives
 - **[@radix-ui/react-icons](https://radix-ui.com/icons)** - Icon set
 - **[lucide-react](https://lucide.dev)** - Icon library
 - **[prism-react-renderer](https://github.com/FormidableLabs/prism-react-renderer)** - Syntax highlighting for code blocks
+- **[sonner](https://sonner.emilkowal.ski)** - Toast notification library
 - **[class-variance-authority](https://cva.style/docs)** - Variant-based component APIs
 - **[clsx](https://github.com/lukeed/clsx)** - Conditional className utility
 - **[tailwind-merge](https://github.com/dcastil/tailwind-merge)** - Merge Tailwind classes
 - **[theme-change](https://github.com/saadeghi/theme-change)** - DaisyUI theme switcher
+- **[trix](https://trix-editor.org)** - WYSIWYG rich text editor
 
 ### Development Dependencies
 
@@ -40,6 +43,7 @@
 - **[typescript](https://typescriptlang.org)** - Type-safe JavaScript
 - **[tailwindcss](https://tailwindcss.com)** - Utility-first CSS framework
 - **[daisyui](https://daisyui.com)** - Tailwind component library
+- **[sass](https://sass-lang.com)** - CSS preprocessor
 - **[prettier](https://prettier.io)** - Code formatter
 - **[husky](https://typicode.github.io/husky)** - Git hooks manager for running scripts on git events
 - **[lint-staged](https://github.com/lint-staged/lint-staged)** - Run linters on git staged files

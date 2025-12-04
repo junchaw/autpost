@@ -4,6 +4,9 @@ Welcome to the Autpost documentation. This index provides quick access to all do
 
 ## Project Documentation
 
+- [Development Guide](./DEVELOPMENT_GUIDE.md) - API patterns, soft delete, and coding conventions
+- [Local Environment](./LOCAL_ENVIRONMENT.md) - Local development setup with Docker
+- [Deployment](./DEPLOYMENT.md) - Production deployment guide
 - [Dependencies](./DEPENDENCIES.md) - PHP and JavaScript dependencies with links
 - [Main Project Guide](../CLAUDE.md) - Setup guide and architecture overview
 
@@ -45,6 +48,8 @@ make lint             # Run all linters
 make format           # Format all code
 make clean            # Clean build artifacts
 make setup            # Initial project setup
+make docker-build     # Build Docker image
+make docker-run       # Run Docker container
 ```
 
 ### Frontend (pnpm)

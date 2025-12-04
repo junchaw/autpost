@@ -5,11 +5,12 @@ interface AddPanelDialogProps {
   onAddPanel: (panelType: string) => void;
 }
 
+// Update: 'tags' replaces 'category', and is an array of strings
 interface PanelOption {
   id: string;
   name: string;
   description: string;
-  category: string;
+  tags: string[];
 }
 
 const PANEL_OPTIONS: PanelOption[] = [
@@ -17,80 +18,97 @@ const PANEL_OPTIONS: PanelOption[] = [
     id: 'base64-encode-decode',
     name: 'Base64 Encoder/Decoder',
     description: 'Encode or decode Base64 strings',
-    category: 'Base64',
+    tags: ['Base64'],
   },
   {
     id: 'base64-simultaneous',
     name: 'Base64 Simultaneous',
     description: 'Encode and decode Base64 at the same time',
-    category: 'Base64',
+    tags: ['Base64'],
   },
   {
     id: 'url-encode-decode',
     name: 'URL Encoder/Decoder',
     description: 'Encode or decode URL strings',
-    category: 'URL',
+    tags: ['URL'],
   },
   {
     id: 'url-simultaneous',
     name: 'URL Simultaneous',
     description: 'Encode and decode URLs at the same time',
-    category: 'URL',
+    tags: ['URL'],
   },
   {
     id: 'url-parser',
     name: 'URL Parser',
     description: 'Parse and analyze URL components',
-    category: 'Parser',
+    tags: ['Parser', 'URL'],
   },
   {
     id: 'jwt-parser',
     name: 'JWT Parser',
     description: 'Decode and inspect JWT tokens',
-    category: 'Parser',
+    tags: ['Parser', 'JWT'],
   },
   {
     id: 'certificate-parser',
     name: 'Certificate Parser',
     description: 'Parse SSL/TLS certificates',
-    category: 'Parser',
+    tags: ['Parser', 'Certificate'],
   },
   {
     id: 'text-unique',
     name: 'Text Unique',
     description: 'Remove duplicate lines from text',
-    category: 'Text',
+    tags: ['Text'],
   },
   {
     id: 'text-duplication',
     name: 'Find Text Duplication',
     description: 'Find and count duplicate lines',
-    category: 'Text',
+    tags: ['Text'],
   },
   {
     id: 'text-sort',
     name: 'Text Sort',
     description: 'Sort text lines alphabetically',
-    category: 'Text',
+    tags: ['Text'],
   },
-  { id: 'text-diff', name: 'Text Diff', description: 'Compare two text blocks', category: 'Text' },
+  {
+    id: 'text-diff',
+    name: 'Text Diff',
+    description: 'Compare two text blocks',
+    tags: ['Text'],
+  },
   {
     id: 'date-format',
     name: 'Date Format',
     description: 'Format dates in multiple languages',
-    category: 'Date & Time',
+    tags: ['Date & Time', 'Parser'],
   },
   {
     id: 'timestamp-parser',
     name: 'Timestamp Parser',
     description: 'Parse Unix timestamps',
-    category: 'Date & Time',
+    tags: ['Date & Time', 'Parser'],
   },
   {
     id: 'qr-code',
     name: 'QR Code Generator',
     description: 'Generate QR codes',
-    category: 'Generator',
+    tags: ['Generator', 'QR Code'],
+  },
+  {
+    id: 'todo',
+    name: 'Todo List',
+    description: 'Manage your tasks with recurring todo support',
+    tags: ['Productivity', 'Todo'],
+  },
+  {
+    id: 'note',
+    name: 'Note',
+    description: 'Simple notes to jot down quick thoughts',
+    tags: ['Productivity', 'Notes'],
   },
 ];
 
@@ -106,11 +124,12 @@ export function AddPanelDialog({ onAddPanel }: AddPanelDialogProps) {
     }
   };
 
+  // Updated: search filters over tags as well
   const filteredPanels = PANEL_OPTIONS.filter(
     (panel) =>
       panel.name.toLowerCase().includes(search.toLowerCase()) ||
       panel.description.toLowerCase().includes(search.toLowerCase()) ||
-      panel.category.toLowerCase().includes(search.toLowerCase())
+      panel.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
@@ -151,9 +170,13 @@ export function AddPanelDialog({ onAddPanel }: AddPanelDialogProps) {
                 onClick={() => handlePanelSelect(panel.id)}
               >
                 <div className="card-body p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="card-title text-sm">{panel.name}</h3>
-                    <span className="badge badge-sm badge-primary">{panel.category}</span>
+                  <h3 className="card-title text-sm mb-2">{panel.name}</h3>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {panel.tags.map((tag) => (
+                      <span key={tag} className="badge badge-sm badge-primary">
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                   <p className="text-xs text-base-content/60">{panel.description}</p>
                 </div>

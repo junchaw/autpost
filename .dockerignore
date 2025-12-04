@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+.pnpm-store
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Build artifacts
+dist
+
+# Environment files (will be set via docker environment)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Laravel
+backend/vendor
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*
+
+# Testing
+backend/coverage
+coverage
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Claude
+.claude
+CLAUDE.md
+
+# Misc
+.DS_Store
+Thumbs.db

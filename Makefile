@@ -1,4 +1,4 @@
-.PHONY: help install dev build test clean lint format
+.PHONY: help
 .DEFAULT_GOAL := help
 
 ##@ General
@@ -8,122 +8,134 @@ help: ## Display this help message
 
 ##@ Installation
 
-install: ## Install all dependencies (backend + frontend)
-	@echo "Installing backend dependencies..."
-	cd backend && composer install
-	@echo "Installing frontend dependencies..."
-	cd frontend && pnpm install
+.PHONY: install
+install: install-backend install-frontend ## Install all dependencies (backend + frontend)
 	@echo "✓ All dependencies installed"
 
+.PHONY: install-backend
 install-backend: ## Install backend dependencies only
 	cd backend && composer install
 
+.PHONY: install-frontend
 install-frontend: ## Install frontend dependencies only
-	cd frontend && pnpm install
+	pnpm install
 
 ##@ Development
 
+.PHONY: dev
 dev: ## Start both backend and frontend development servers
 	@echo "Starting development servers..."
 	@echo "Backend: http://localhost:8000"
 	@echo "Frontend: http://localhost:5173"
 	@make -j2 dev-backend dev-frontend
 
+.PHONY: dev-backend
 dev-backend: ## Start backend development server
 	cd backend && php artisan serve
 
+.PHONY: dev-frontend
 dev-frontend: ## Start frontend development server
-	cd frontend && pnpm run dev
+	pnpm run dev
 
 ##@ Build
 
+.PHONY: build
 build: ## Build frontend for production
-	cd frontend && pnpm run build
+	pnpm run build
 
+.PHONY: build-preview
 build-preview: ## Preview production build
-	cd frontend && pnpm run preview
+	pnpm run preview
 
 ##@ Testing
 
-test: ## Run backend tests
-	cd backend && php artisan test
+.PHONY: test
+test: test-backend ## Run backend tests
 
+.PHONY: test-backend
 test-backend: ## Run backend tests
 	cd backend && php artisan test
 
 ##@ Database
 
+.PHONY: db-migrate
 db-migrate: ## Run database migrations
 	cd backend && php artisan migrate
+.PHONY: db-fresh
 
+.PHONY: db-fresh
 db-fresh: ## Drop all tables and re-run migrations
 	cd backend && php artisan migrate:fresh
+.PHONY: db-seed
 
+.PHONY: db-seed
 db-seed: ## Seed the database
 	cd backend && php artisan db:seed
+.PHONY: db-reset
 
+.PHONY: db-reset
 db-reset: ## Reset database (fresh + seed)
 	cd backend && php artisan migrate:fresh --seed
 
 ##@ Code Quality
 
+.PHONY: lint
 lint: ## Run linters (backend + frontend)
-	@echo "Linting backend..."
-	cd backend && ./vendor/bin/pint --test
-	@echo "Linting frontend..."
-	cd frontend && pnpm run lint
+	$(MAKE) lint-backend
+	$(MAKE) lint-frontend
 
+.PHONY: lint-backend
 lint-backend: ## Run backend linter (Pint)
 	cd backend && ./vendor/bin/pint --test
 
+.PHONY: lint-frontend
 lint-frontend: ## Run frontend linter (ESLint)
-	cd frontend && pnpm run lint
+	pnpm run lint
 
+.PHONY: format
 format: ## Format code (backend + frontend)
-	@echo "Formatting backend..."
-	cd backend && ./vendor/bin/pint
-	@echo "Formatting frontend..."
-	cd frontend && pnpm run lint
+	$(MAKE) format-backend
+	$(MAKE) lint-frontend
 
+.PHONY: format-backend
 format-backend: ## Format backend code (Pint)
 	cd backend && ./vendor/bin/pint
 
+.PHONY: typecheck
 typecheck: ## Run TypeScript type checking
-	cd frontend && pnpm run tsc
+	pnpm run tsc
 
 ##@ Cleanup
 
+.PHONY: clean
 clean: ## Clean build artifacts and caches
 	@echo "Cleaning build artifacts..."
-	rm -rf frontend/dist
-	rm -rf frontend/node_modules/.vite
+	rm -rf dist
+	rm -rf node_modules/.vite
 	rm -rf backend/bootstrap/cache/*.php
 	@echo "✓ Cleaned"
-
-clean-all: ## Remove all dependencies and build artifacts
-	@echo "Removing all dependencies and build artifacts..."
-	rm -rf frontend/dist
-	rm -rf frontend/node_modules
-	rm -rf backend/vendor
-	rm -rf backend/bootstrap/cache/*.php
-	@echo "✓ All cleaned"
+.PHONY: clean-all
 
 ##@ Laravel Artisan
 
+.PHONY: artisan-key
 artisan-key: ## Generate application key
 	cd backend && php artisan key:generate
 
+.PHONY: artisan-cache
 artisan-cache: ## Clear all caches
 	cd backend && php artisan cache:clear
 	cd backend && php artisan config:clear
 	cd backend && php artisan route:clear
 	cd backend && php artisan view:clear
 
+.PHONY: artisan-optimize
 artisan-optimize: ## Optimize the application
 	cd backend && php artisan optimize
 
 ##@ Setup
 
+.PHONY: setup
 setup: install artisan-key db-migrate ## Initial project setup
 	@echo "✓ Project setup complete!"
 	@echo ""
@@ -132,8 +144,35 @@ setup: install artisan-key db-migrate ## Initial project setup
 	@echo "  2. Configure frontend/.env (API URL)"
 	@echo "  3. Run 'make dev' to start development servers"
 
+##@ Docker
+
+.PHONY: docker-build
+docker-build: ## Build Docker image
+	docker build -t autpost .
+
+.PHONY: docker-run
+docker-run: ## Run Docker container
+	docker-compose up -d
+
+.PHONY: docker-stop
+docker-stop: ## Stop Docker container
+	docker-compose down
+
+.PHONY: docker-destroy
+docker-destroy: ## Destroy Docker environment including volumes
+	docker-compose down -v --rmi local
+
+.PHONY: docker-logs
+docker-logs: ## View Docker logs
+	docker-compose logs -f
+
+.PHONY: docker-shell
+docker-shell: ## Open shell in Docker container
+	docker-compose exec app sh
+
 ##@ Information
 
+.PHONY: status
 status: ## Show project status
 	@echo "\n\033[1mProject Status\033[0m"
 	@echo "=============="
@@ -141,6 +180,6 @@ status: ## Show project status
 	@cd backend && php --version | head -n 1
 	@cd backend && composer --version
 	@echo "\n\033[1mFrontend:\033[0m"
-	@cd frontend && node --version
-	@cd frontend && pnpm --version
+	@node --version
+	@pnpm --version
 	@echo ""

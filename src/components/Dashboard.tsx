@@ -17,6 +17,8 @@ import { TextDiffPanel } from './panels/TextDiffPanel';
 import { DateFormatPanel } from './panels/DateFormatPanel';
 import { TimestampParserPanel } from './panels/TimestampParserPanel';
 import { QRCodePanel } from './panels/QRCodePanel';
+import { TodoPanel } from './panels/TodoPanel';
+import { NotePanel } from './panels/NotePanel';
 import { AddPanelDialog } from './AddPanelDialog';
 import { Banner } from './Banner';
 import { PanelWrapper } from './PanelWrapper';
@@ -139,6 +141,10 @@ export function Dashboard() {
         return 'Text Sort';
       case 'text-duplication':
         return 'Find Text Duplication';
+      case 'todo':
+        return 'Todo List';
+      case 'note':
+        return 'Note';
       default:
         return 'Unknown Panel';
     }
@@ -194,6 +200,12 @@ export function Dashboard() {
         break;
       case 'qr-code':
         panel = <QRCodePanel />;
+        break;
+      case 'todo':
+        panel = <TodoPanel />;
+        break;
+      case 'note':
+        panel = <NotePanel />;
         break;
       default:
         panel = (
