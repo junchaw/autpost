@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 
 interface ParsedJWT {
   header: Record<string, unknown>;
@@ -12,75 +12,78 @@ interface ParsedJWT {
   };
 }
 
-export function JWTParserPanel() {
-  const [input, setInput] = useState('');
-  const [parsed, setParsed] = useState<ParsedJWT | null>(null);
-  const [error, setError] = useState<string>('');
+function base64UrlDecode(str: string): string {
+  // Convert base64url to base64
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  // Add padding if needed
+  const padding = base64.length % 4;
+  if (padding) {
+    base64 += '='.repeat(4 - padding);
+  }
+  return atob(base64);
+}
 
-  const base64UrlDecode = (str: string): string => {
-    // Convert base64url to base64
-    let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-    // Add padding if needed
-    const padding = base64.length % 4;
-    if (padding) {
-      base64 += '='.repeat(4 - padding);
+function parseJWT(input: string): { parsed: ParsedJWT | null; error: string } {
+  if (!input) {
+    return { parsed: null, error: '' };
+  }
+
+  try {
+    const parts = input.trim().split('.');
+
+    if (parts.length !== 3) {
+      return {
+        parsed: null,
+        error: 'Invalid JWT format. JWT should have 3 parts separated by dots.',
+      };
     }
-    return atob(base64);
-  };
 
-  useEffect(() => {
-    if (!input) {
-      setParsed(null);
-      setError('');
-      return;
+    const [headerB64, payloadB64, signatureB64] = parts;
+
+    // Decode header
+    const headerJson = base64UrlDecode(headerB64);
+    const header = JSON.parse(headerJson);
+
+    // Decode payload
+    const payloadJson = base64UrlDecode(payloadB64);
+    const payload = JSON.parse(payloadJson);
+
+    // Parse timestamps
+    const timestamps: ParsedJWT['timestamps'] = {};
+    if (payload.iat) {
+      timestamps.iat = new Date(payload.iat * 1000).toISOString();
+    }
+    if (payload.exp) {
+      timestamps.exp = new Date(payload.exp * 1000).toISOString();
+      // Check expiration status - this is computed once when input changes
+      const now = Date.now();
+      timestamps.status = (payload.exp as number) * 1000 < now ? 'EXPIRED' : 'VALID';
+    }
+    if (payload.nbf) {
+      timestamps.nbf = new Date(payload.nbf * 1000).toISOString();
     }
 
-    try {
-      const parts = input.trim().split('.');
-
-      if (parts.length !== 3) {
-        setError('Invalid JWT format. JWT should have 3 parts separated by dots.');
-        setParsed(null);
-        return;
-      }
-
-      const [headerB64, payloadB64, signatureB64] = parts;
-
-      // Decode header
-      const headerJson = base64UrlDecode(headerB64);
-      const header = JSON.parse(headerJson);
-
-      // Decode payload
-      const payloadJson = base64UrlDecode(payloadB64);
-      const payload = JSON.parse(payloadJson);
-
-      // Parse timestamps
-      const timestamps: ParsedJWT['timestamps'] = {};
-      if (payload.iat) {
-        timestamps.iat = new Date(payload.iat * 1000).toISOString();
-      }
-      if (payload.exp) {
-        timestamps.exp = new Date(payload.exp * 1000).toISOString();
-        const now = Date.now();
-        const expTime = payload.exp * 1000;
-        timestamps.status = expTime < now ? 'EXPIRED' : 'VALID';
-      }
-      if (payload.nbf) {
-        timestamps.nbf = new Date(payload.nbf * 1000).toISOString();
-      }
-
-      setParsed({
+    return {
+      parsed: {
         header,
         payload,
         signature: signatureB64,
         timestamps: Object.keys(timestamps).length > 0 ? timestamps : undefined,
-      });
-      setError('');
-    } catch (err) {
-      setParsed(null);
-      setError(err instanceof Error ? err.message : 'Invalid JWT token');
-    }
-  }, [input]);
+      },
+      error: '',
+    };
+  } catch (err) {
+    return {
+      parsed: null,
+      error: err instanceof Error ? err.message : 'Invalid JWT token',
+    };
+  }
+}
+
+export function JWTParserPanel() {
+  const [input, setInput] = useState('');
+
+  const { parsed, error } = useMemo(() => parseJWT(input), [input]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

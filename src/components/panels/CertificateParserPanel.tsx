@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 interface ParsedCertificate {
   version?: string;
@@ -20,110 +20,110 @@ interface ParsedCertificate {
   extensions?: Record<string, string>;
 }
 
+const parseCertificate = (certText: string): ParsedCertificate => {
+  // Remove PEM headers/footers
+  const pemPattern = /-----BEGIN CERTIFICATE-----([^-]+)-----END CERTIFICATE-----/;
+  const match = certText.match(pemPattern);
+
+  if (!match) {
+    throw new Error('Invalid certificate format. Expected PEM format.');
+  }
+
+  const base64Cert = match[1].replace(/\s/g, '');
+  const binaryString = atob(base64Cert);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  // Parse basic certificate info (simplified parsing)
+  const cert: ParsedCertificate = {};
+
+  // Try to extract readable strings
+  const text = String.fromCharCode.apply(null, Array.from(bytes));
+
+  // Extract common certificate fields using regex patterns
+  // eslint-disable-next-line no-control-regex
+  const cnMatch = text.match(/CN=([^,\x00]+)/);
+  // eslint-disable-next-line no-control-regex
+  const oMatch = text.match(/O=([^,\x00]+)/);
+  // eslint-disable-next-line no-control-regex
+  const ouMatch = text.match(/OU=([^,\x00]+)/);
+  const cMatch = text.match(/C=([A-Z]{2})/);
+
+  if (cnMatch || oMatch || ouMatch || cMatch) {
+    cert.subject = {};
+    if (cnMatch) cert.subject['CN (Common Name)'] = cnMatch[1].trim();
+    if (oMatch) cert.subject['O (Organization)'] = oMatch[1].trim();
+    if (ouMatch) cert.subject['OU (Organizational Unit)'] = ouMatch[1].trim();
+    if (cMatch) cert.subject['C (Country)'] = cMatch[1];
+  }
+
+  // Look for dates (ASN.1 UTCTime or GeneralizedTime)
+  const datePattern = /(\d{12,14}Z)/g;
+  const dates = text.match(datePattern);
+  if (dates && dates.length >= 2) {
+    const parseDate = (dateStr: string): string => {
+      let year, month, day, hour, min, sec;
+      if (dateStr.length === 13) {
+        // UTCTime YYMMDDHHMMSSZ
+        year = parseInt('20' + dateStr.substr(0, 2));
+        month = dateStr.substr(2, 2);
+        day = dateStr.substr(4, 2);
+        hour = dateStr.substr(6, 2);
+        min = dateStr.substr(8, 2);
+        sec = dateStr.substr(10, 2);
+      } else {
+        // GeneralizedTime YYYYMMDDHHMMSSZ
+        year = parseInt(dateStr.substr(0, 4));
+        month = dateStr.substr(4, 2);
+        day = dateStr.substr(6, 2);
+        hour = dateStr.substr(8, 2);
+        min = dateStr.substr(10, 2);
+        sec = dateStr.substr(12, 2);
+      }
+      return new Date(`${year}-${month}-${day}T${hour}:${min}:${sec}Z`).toISOString();
+    };
+
+    const notBefore = parseDate(dates[0]);
+    const notAfter = parseDate(dates[1]);
+    const now = new Date();
+    const notBeforeDate = new Date(notBefore);
+    const notAfterDate = new Date(notAfter);
+
+    let status: 'VALID' | 'EXPIRED' | 'NOT_YET_VALID' = 'VALID';
+    if (now < notBeforeDate) status = 'NOT_YET_VALID';
+    if (now > notAfterDate) status = 'EXPIRED';
+
+    cert.validity = { notBefore, notAfter, status };
+  }
+
+  // Detect common algorithms
+  if (text.includes('rsaEncryption') || text.includes('RSA')) {
+    cert.subjectPublicKeyInfo = { algorithm: 'RSA' };
+  } else if (text.includes('ecPublicKey') || text.includes('prime256v1')) {
+    cert.subjectPublicKeyInfo = { algorithm: 'EC (Elliptic Curve)' };
+  }
+
+  return cert;
+};
+
 export function CertificateParserPanel() {
   const [input, setInput] = useState('');
-  const [parsed, setParsed] = useState<ParsedCertificate | null>(null);
-  const [error, setError] = useState<string>('');
 
-  const parseCertificate = (certText: string): ParsedCertificate => {
-    // Remove PEM headers/footers
-    const pemPattern = /-----BEGIN CERTIFICATE-----([^-]+)-----END CERTIFICATE-----/;
-    const match = certText.match(pemPattern);
-
-    if (!match) {
-      throw new Error('Invalid certificate format. Expected PEM format.');
-    }
-
-    const base64Cert = match[1].replace(/\s/g, '');
-    const binaryString = atob(base64Cert);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    // Parse basic certificate info (simplified parsing)
-    const cert: ParsedCertificate = {};
-
-    // Try to extract readable strings
-    const text = String.fromCharCode.apply(null, Array.from(bytes));
-
-    // Extract common certificate fields using regex patterns
-    const cnMatch = text.match(/CN=([^,\x00]+)/);
-    const oMatch = text.match(/O=([^,\x00]+)/);
-    const ouMatch = text.match(/OU=([^,\x00]+)/);
-    const cMatch = text.match(/C=([A-Z]{2})/);
-
-    if (cnMatch || oMatch || ouMatch || cMatch) {
-      cert.subject = {};
-      if (cnMatch) cert.subject['CN (Common Name)'] = cnMatch[1].trim();
-      if (oMatch) cert.subject['O (Organization)'] = oMatch[1].trim();
-      if (ouMatch) cert.subject['OU (Organizational Unit)'] = ouMatch[1].trim();
-      if (cMatch) cert.subject['C (Country)'] = cMatch[1];
-    }
-
-    // Look for dates (ASN.1 UTCTime or GeneralizedTime)
-    const datePattern = /(\d{12,14}Z)/g;
-    const dates = text.match(datePattern);
-    if (dates && dates.length >= 2) {
-      const parseDate = (dateStr: string): string => {
-        let year, month, day, hour, min, sec;
-        if (dateStr.length === 13) {
-          // UTCTime YYMMDDHHMMSSZ
-          year = parseInt('20' + dateStr.substr(0, 2));
-          month = dateStr.substr(2, 2);
-          day = dateStr.substr(4, 2);
-          hour = dateStr.substr(6, 2);
-          min = dateStr.substr(8, 2);
-          sec = dateStr.substr(10, 2);
-        } else {
-          // GeneralizedTime YYYYMMDDHHMMSSZ
-          year = parseInt(dateStr.substr(0, 4));
-          month = dateStr.substr(4, 2);
-          day = dateStr.substr(6, 2);
-          hour = dateStr.substr(8, 2);
-          min = dateStr.substr(10, 2);
-          sec = dateStr.substr(12, 2);
-        }
-        return new Date(`${year}-${month}-${day}T${hour}:${min}:${sec}Z`).toISOString();
-      };
-
-      const notBefore = parseDate(dates[0]);
-      const notAfter = parseDate(dates[1]);
-      const now = new Date();
-      const notBeforeDate = new Date(notBefore);
-      const notAfterDate = new Date(notAfter);
-
-      let status: 'VALID' | 'EXPIRED' | 'NOT_YET_VALID' = 'VALID';
-      if (now < notBeforeDate) status = 'NOT_YET_VALID';
-      if (now > notAfterDate) status = 'EXPIRED';
-
-      cert.validity = { notBefore, notAfter, status };
-    }
-
-    // Detect common algorithms
-    if (text.includes('rsaEncryption') || text.includes('RSA')) {
-      cert.subjectPublicKeyInfo = { algorithm: 'RSA' };
-    } else if (text.includes('ecPublicKey') || text.includes('prime256v1')) {
-      cert.subjectPublicKeyInfo = { algorithm: 'EC (Elliptic Curve)' };
-    }
-
-    return cert;
-  };
-
-  useEffect(() => {
+  const { parsed, error } = useMemo(() => {
     if (!input) {
-      setParsed(null);
-      setError('');
-      return;
+      return { parsed: null, error: '' };
     }
 
     try {
       const result = parseCertificate(input);
-      setParsed(result);
-      setError('');
+      return { parsed: result, error: '' };
     } catch (err) {
-      setParsed(null);
-      setError(err instanceof Error ? err.message : 'Failed to parse certificate');
+      return {
+        parsed: null,
+        error: err instanceof Error ? err.message : 'Failed to parse certificate',
+      };
     }
   }, [input]);
 

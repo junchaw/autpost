@@ -1,15 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 export function TextSortPanel() {
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
   const [reverse, setReverse] = useState(false);
   const [unique, setUnique] = useState(false);
 
-  useEffect(() => {
+  const output = useMemo(() => {
     if (!input) {
-      setOutput('');
-      return;
+      return '';
     }
 
     let lines = input.split('\n');
@@ -24,7 +22,7 @@ export function TextSortPanel() {
       sorted.reverse();
     }
 
-    setOutput(sorted.join('\n'));
+    return sorted.join('\n');
   }, [input, reverse, unique]);
 
   return (

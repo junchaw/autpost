@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, Pause, Play, X } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, Edit2, Trash2, Pause, Play, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../../../lib/api';
 import type {
   RecurringTodo,
   IntervalUnit,
   CreateRecurringTodoInput,
   UpdateRecurringTodoInput,
+  Pagination,
 } from '../../../lib/api';
+import { RecurringTodoForm } from './RecurringTodoForm';
 import {
-  RecurringTodoForm,
   type RecurringTodoFormData,
   type FormErrors,
   INTERVAL_UNIT_LABELS,
@@ -16,7 +17,7 @@ import {
   getDefaultFormData,
   validateForm,
   parseApiError,
-} from './RecurringTodoForm';
+} from './recurring-todo-utils';
 
 interface RecurringTodoModalProps {
   isOpen: boolean;
@@ -29,8 +30,12 @@ function formatDateTime(isoString: string): string {
   return date.toLocaleString();
 }
 
+const PER_PAGE = 10;
+
 export function RecurringTodoModal({ isOpen, onClose, onTodosGenerated }: RecurringTodoModalProps) {
   const [recurringTodos, setRecurringTodos] = useState<RecurringTodo[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -41,6 +46,23 @@ export function RecurringTodoModal({ isOpen, onClose, onTodosGenerated }: Recurr
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<RecurringTodoFormData>(getDefaultFormData());
+
+  const loadRecurringTodos = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await api.recurringTodos.list({
+        page: currentPage,
+        perPage: PER_PAGE,
+      });
+      setRecurringTodos(response.recurring_todos);
+      setPagination(response.pagination);
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load recurring todos');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
 
   // Dialog open/close effect
   useEffect(() => {
@@ -53,7 +75,7 @@ export function RecurringTodoModal({ isOpen, onClose, onTodosGenerated }: Recurr
     } else {
       dialog.close();
     }
-  }, [isOpen]);
+  }, [isOpen, loadRecurringTodos]);
 
   // Handle native dialog close (e.g., Escape key)
   useEffect(() => {
@@ -65,18 +87,12 @@ export function RecurringTodoModal({ isOpen, onClose, onTodosGenerated }: Recurr
     return () => dialog.removeEventListener('close', handleClose);
   }, [onClose]);
 
-  const loadRecurringTodos = async () => {
-    try {
-      setLoading(true);
-      const response = await api.recurringTodos.list();
-      setRecurringTodos(response.recurring_todos);
-      setError('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load recurring todos');
-    } finally {
-      setLoading(false);
+  // Reload when page changes
+  useEffect(() => {
+    if (isOpen) {
+      loadRecurringTodos();
     }
-  };
+  }, [currentPage, isOpen, loadRecurringTodos]);
 
   const resetForm = () => {
     setFormData(getDefaultFormData());
@@ -329,6 +345,32 @@ export function RecurringTodoModal({ isOpen, onClose, onTodosGenerated }: Recurr
             )
           )}
         </div>
+
+        {/* Pagination */}
+        {pagination && (
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-base-300">
+            <span className="text-xs text-base-content/50">{pagination.total} items</span>
+            <div className="flex items-center gap-1">
+              <button
+                className="btn btn-ghost btn-xs btn-circle"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="text-xs px-2">
+                {currentPage} / {Math.max(1, Math.ceil(pagination.total / pagination.per_page))}
+              </span>
+              <button
+                className="btn btn-ghost btn-xs btn-circle"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage >= Math.ceil(pagination.total / pagination.per_page)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="modal-action">
           <button className="btn" onClick={onClose}>

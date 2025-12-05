@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useId, useCallback } from 'react';
 import { X, Settings, Check } from 'lucide-react';
 import type { WidthMode, ScreenSize, ResponsiveSize } from '../lib/api';
+import { DEFAULT_SIZES, SCREEN_SIZE_LABELS } from './panelConstants';
 
 interface PanelWrapperProps {
   title: string;
@@ -11,18 +12,6 @@ interface PanelWrapperProps {
   onRemove?: () => void;
   onConfigChange?: (config: { sm: ResponsiveSize; md: ResponsiveSize; lg: ResponsiveSize }) => void;
 }
-
-const DEFAULT_SIZES: Record<ScreenSize, ResponsiveSize> = {
-  sm: { widthMode: 'column', width: 24, height: 300 },
-  md: { widthMode: 'column', width: 12, height: 400 },
-  lg: { widthMode: 'column', width: 8, height: 400 },
-};
-
-const SCREEN_SIZE_LABELS: Record<ScreenSize, string> = {
-  sm: 'Small (mobile devices)',
-  md: 'Medium (tablets)',
-  lg: 'Large (desktops)',
-};
 
 export function PanelWrapper({
   title,
@@ -126,9 +115,9 @@ export function PanelWrapper({
         @media (min-width: 768px) { .${panelClass} { height: ${md.height}px; } }
         @media (min-width: 1024px) { .${panelClass} { height: ${lg.height}px; } }
       `}</style>
-      <div className="card-body overflow-auto">
-        <h2 className="card-title">{title}</h2>
-        {children}
+      <div className="card-body flex flex-col overflow-hidden">
+        <h2 className="card-title shrink-0">{title}</h2>
+        <div className="flex-1 overflow-auto">{children}</div>
       </div>
       {(onRemove || onConfigChange) && (
         <div
@@ -238,5 +227,3 @@ export function PanelWrapper({
     </div>
   );
 }
-
-export { DEFAULT_SIZES };

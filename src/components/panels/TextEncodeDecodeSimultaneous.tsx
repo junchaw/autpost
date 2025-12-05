@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { CodeBlock } from '../CodeBlock';
 
 interface TextEncodeDecodeSimultaneousProps {
@@ -19,31 +19,35 @@ export function TextEncodeDecodeSimultaneous({
   useCodeBlock = false,
 }: TextEncodeDecodeSimultaneousProps) {
   const [input, setInput] = useState('');
-  const [encodedOutput, setEncodedOutput] = useState('');
-  const [decodedOutput, setDecodedOutput] = useState('');
-  const [encodeError, setEncodeError] = useState('');
-  const [decodeError, setDecodeError] = useState('');
 
-  useEffect(() => {
+  const { encodedOutput, decodedOutput, encodeError, decodeError } = useMemo(() => {
+    let encoded = '';
+    let encodeErr = '';
+    let decoded = '';
+    let decodeErr = '';
+
     // Encode
-    setEncodeError('');
     try {
-      const encoded = input ? encode(input) : '';
-      setEncodedOutput(encoded);
-    } catch (err) {
-      setEncodeError(encodeErrorMessage);
-      setEncodedOutput('');
+      encoded = input ? encode(input) : '';
+    } catch {
+      encodeErr = encodeErrorMessage;
+      encoded = '';
     }
 
     // Decode
-    setDecodeError('');
     try {
-      const decoded = input ? decode(input) : '';
-      setDecodedOutput(decoded);
-    } catch (err) {
-      setDecodeError(decodeErrorMessage);
-      setDecodedOutput('');
+      decoded = input ? decode(input) : '';
+    } catch {
+      decodeErr = decodeErrorMessage;
+      decoded = '';
     }
+
+    return {
+      encodedOutput: encoded,
+      decodedOutput: decoded,
+      encodeError: encodeErr,
+      decodeError: decodeErr,
+    };
   }, [input, encode, decode, encodeErrorMessage, decodeErrorMessage]);
 
   return (

@@ -22,16 +22,24 @@ install-frontend: ## Install frontend dependencies only
 
 ##@ Development
 
+gen: gen-openapi ## Generate OpenAPI spec and TypeScript client
+
+gen-openapi: ## Generate OpenAPI spec and TypeScript client
+	cd backend && php artisan l5-swagger:generate
+	rm -f openapi/openapi.json
+	cp openapi/openapi.yaml public/openapi.yaml
+	npx openapi-typescript openapi/openapi.yaml -o src/lib/api/generated/schema.d.ts
+
 .PHONY: dev
 dev: ## Start both backend and frontend development servers
 	@echo "Starting development servers..."
-	@echo "Backend: http://localhost:8000"
+	@echo "Backend: http://localhost:9527"
 	@echo "Frontend: http://localhost:5173"
 	@make -j2 dev-backend dev-frontend
 
 .PHONY: dev-backend
 dev-backend: ## Start backend development server
-	cd backend && php artisan serve
+	cd backend && php artisan serve --port=9527
 
 .PHONY: dev-frontend
 dev-frontend: ## Start frontend development server
@@ -80,9 +88,7 @@ db-reset: ## Reset database (fresh + seed)
 ##@ Code Quality
 
 .PHONY: lint
-lint: ## Run linters (backend + frontend)
-	$(MAKE) lint-backend
-	$(MAKE) lint-frontend
+lint: typecheck lint-backend lint-frontend## Run linters (backend + frontend)
 
 .PHONY: lint-backend
 lint-backend: ## Run backend linter (Pint)
@@ -92,14 +98,22 @@ lint-backend: ## Run backend linter (Pint)
 lint-frontend: ## Run frontend linter (ESLint)
 	pnpm run lint
 
+.PHONY: lint-frontend-fix
+lint-frontend-fix: ## Run frontend linter with auto-fix (ESLint)
+	pnpm run lint:fix
+
 .PHONY: format
 format: ## Format code (backend + frontend)
 	$(MAKE) format-backend
-	$(MAKE) lint-frontend
+	$(MAKE) format-frontend
 
 .PHONY: format-backend
 format-backend: ## Format backend code (Pint)
 	cd backend && ./vendor/bin/pint
+
+.PHONY: format-frontend
+format-frontend: ## Format frontend code (Prettier)
+	pnpm run format
 
 .PHONY: typecheck
 typecheck: ## Run TypeScript type checking
@@ -146,27 +160,21 @@ setup: install artisan-key db-migrate ## Initial project setup
 
 ##@ Docker
 
-.PHONY: docker-build
 docker-build: ## Build Docker image
 	docker build -t autpost .
 
-.PHONY: docker-run
 docker-run: ## Run Docker container
 	docker-compose up -d
 
-.PHONY: docker-stop
 docker-stop: ## Stop Docker container
 	docker-compose down
 
-.PHONY: docker-destroy
 docker-destroy: ## Destroy Docker environment including volumes
 	docker-compose down -v --rmi local
 
-.PHONY: docker-logs
 docker-logs: ## View Docker logs
 	docker-compose logs -f
 
-.PHONY: docker-shell
 docker-shell: ## Open shell in Docker container
 	docker-compose exec app sh
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Edit, Check } from 'lucide-react';
 import { api } from '../lib/api';
 import type { DashboardConfig, PanelConfig, ResponsiveSize } from '../lib/api';
-import { DEFAULT_SIZES } from './PanelWrapper';
+import { DEFAULT_SIZES } from './panelConstants';
 import { Base64EncodeDecodePanel } from './panels/Base64EncodeDecodePanel';
 import { Base64SimultaneousPanel } from './panels/Base64SimultaneousPanel';
 import { URLEncodeDecodePanel } from './panels/URLEncodeDecodePanel';

@@ -1,7 +1,7 @@
 import { THEMES, useTheme } from '@/hooks/useTheme';
 import { LogIn, LogOut, Palette, Settings, User as UserIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 
 function getInitials(name: string): string {
   return name

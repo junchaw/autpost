@@ -43,7 +43,7 @@ export function useTheme() {
     themeChange(false);
     // Apply initial theme
     applyTheme(theme);
-  }, []);
+  }, [theme]);
 
   useEffect(() => {
     // Listen for system theme changes

@@ -7,7 +7,12 @@ import { ProfilePage } from './components/ProfilePage';
 import { RegisterPage } from './components/RegisterPage';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { Toaster } from './components/ui/sonner';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './contexts/useAuth';
+import { AccessLogPage } from './pages/AccessLogPage';
+import { AdminPage } from './pages/AdminPage';
+import { ApiDocsPage } from './pages/ApiDocsPage';
+import { RolesPage } from './pages/RolesPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -82,6 +87,35 @@ function AppRoutes() {
         }
       />
 
+      {/* API Documentation */}
+      <Route path="/docs" element={<ApiDocsPage />} />
+
+      {/* Admin routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/access-logs"
+        element={
+          <ProtectedRoute>
+            <AccessLogPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/roles"
+        element={
+          <ProtectedRoute>
+            <RolesPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Protected routes */}
       <Route
         path="/dashboard"
@@ -111,7 +145,7 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <AppRoutes />
-        <Toaster position="top-right" richColors />
+        <Toaster richColors />
       </AuthProvider>
     </BrowserRouter>
   );

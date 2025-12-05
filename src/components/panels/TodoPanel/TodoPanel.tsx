@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Calendar,
   Check,
@@ -6,7 +6,7 @@ import {
   ChevronRight,
   Circle,
   Clock,
-  List,
+  Inbox,
   Plus,
   RefreshCw,
   Save,
@@ -45,12 +45,14 @@ const STATE_LABELS: Record<TodoState, string> = {
   cancelled: 'Cancelled',
 };
 
+type FilterType = TodoState | 'inbox';
+
 export function TodoPanel() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<TodoState | 'all'>('all');
+  const [filter, setFilter] = useState<FilterType>('inbox');
   const [currentPage, setCurrentPage] = useState(1);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
 
@@ -63,16 +65,17 @@ export function TodoPanel() {
   const [savingNote, setSavingNote] = useState(false);
   const noteRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadTodos();
-  }, [filter, currentPage]);
-
-  const loadTodos = async () => {
+  const loadTodos = useCallback(async () => {
     try {
       setLoading(true);
-      const state = filter === 'all' ? undefined : filter;
+      let states: TodoState[] | undefined;
+      if (filter === 'inbox') {
+        states = ['pending', 'in_progress'];
+      } else {
+        states = [filter];
+      }
       const response = await api.todos.list({
-        state,
+        states,
         page: currentPage,
         perPage: PER_PAGE,
       });
@@ -84,7 +87,11 @@ export function TodoPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, currentPage]);
+
+  useEffect(() => {
+    loadTodos();
+  }, [loadTodos]);
 
   // Inline form functions
   const startAddTodo = () => {
@@ -188,15 +195,15 @@ export function TodoPanel() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-1 flex-wrap">
-          <div className="tooltip tooltip-bottom" data-tip="All">
+          <div className="tooltip tooltip-right" data-tip="Inbox">
             <button
-              className={`btn btn-xs btn-circle ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+              className={`btn btn-xs btn-circle ${filter === 'inbox' ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => {
-                setFilter('all');
+                setFilter('inbox');
                 setCurrentPage(1);
               }}
             >
-              <List className="h-3.5 w-3.5" />
+              <Inbox className="h-3.5 w-3.5" />
             </button>
           </div>
           {(['pending', 'in_progress', 'completed', 'cancelled'] as TodoState[]).map((state) => (
@@ -204,7 +211,7 @@ export function TodoPanel() {
               <button
                 className={`btn btn-xs btn-circle ${filter === state ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => {
-                  setFilter(filter === state ? 'all' : state);
+                  setFilter(filter === state ? 'inbox' : state);
                   setCurrentPage(1);
                 }}
               >
@@ -213,7 +220,7 @@ export function TodoPanel() {
             </div>
           ))}
         </div>
-        <div className="tooltip tooltip-bottom" data-tip="Recurring Todos">
+        <div className="tooltip tooltip-left" data-tip="Recurring Todos">
           <button
             className="btn btn-ghost btn-sm btn-circle"
             onClick={() => setShowRecurringModal(true)}
@@ -248,9 +255,7 @@ export function TodoPanel() {
             <span className="loading loading-spinner loading-sm"></span>
           </div>
         ) : todos.length === 0 ? (
-          <div className="text-center text-base-content/50 py-8">
-            {filter === 'all' ? 'No active todos' : 'No todos found'}
-          </div>
+          <div className="text-center text-base-content/50 py-8">{'No todos found'}</div>
         ) : (
           todos.map((todo) =>
             editingTodoId === todo.id ? (
@@ -384,7 +389,7 @@ export function TodoPanel() {
       </div>
 
       {/* Pagination */}
-      {pagination && pagination.total > pagination.per_page && (
+      {pagination && (
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-base-300">
           <span className="text-xs text-base-content/50">{pagination.total} items</span>
           <div className="flex items-center gap-1">
@@ -396,7 +401,7 @@ export function TodoPanel() {
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="text-xs px-2">
-              {currentPage} / {Math.ceil(pagination.total / pagination.per_page)}
+              {currentPage} / {Math.max(1, Math.ceil(pagination.total / pagination.per_page))}
             </span>
             <button
               className="btn btn-ghost btn-xs btn-circle"

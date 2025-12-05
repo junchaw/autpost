@@ -1,4 +1,5 @@
 import { fetchApi } from './client';
+import type { Pagination } from './types';
 
 export type RecurringTodoState = 'active' | 'paused';
 export type IntervalUnit = 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year';
@@ -16,6 +17,12 @@ export interface RecurringTodo {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+}
+
+export interface RecurringTodoListParams {
+  state?: RecurringTodoState;
+  page?: number;
+  perPage?: number;
 }
 
 export interface CreateRecurringTodoInput {
@@ -39,10 +46,16 @@ export interface UpdateRecurringTodoInput {
 }
 
 export const recurringTodosApi = {
-  list: (state?: RecurringTodoState) =>
-    fetchApi<{ recurring_todos: RecurringTodo[] }>(
-      `/recurring-todos${state ? `?state=${state}` : ''}`
-    ),
+  list: (params: RecurringTodoListParams = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.state) searchParams.set('state', params.state);
+    if (params.page) searchParams.set('page', params.page.toString());
+    if (params.perPage) searchParams.set('per_page', params.perPage.toString());
+    const query = searchParams.toString();
+    return fetchApi<{ recurring_todos: RecurringTodo[]; pagination: Pagination }>(
+      `/recurring-todos${query ? `?${query}` : ''}`
+    );
+  },
 
   get: (id: number) => fetchApi<{ recurring_todo: RecurringTodo }>(`/recurring-todos/${id}`),
 

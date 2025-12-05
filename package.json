@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "tsc": "tsc --noEmit",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "preview": "vite preview",
     "prepare": "husky"
   },
@@ -26,6 +29,7 @@
     "react-dom": "^19.2.0",
     "react-qr-code": "^2.0.18",
     "react-router-dom": "^7.10.1",
+    "redoc": "^2.5.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "theme-change": "^2.5.0",
@@ -50,6 +54,8 @@
     "globals": "^16.5.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "openapi-fetch": "^0.15.0",
+    "openapi-typescript": "^7.10.1",
     "postcss": "^8.5.6",
     "prettier": "^3.7.4",
     "sass": "^1.94.2",

@@ -6,12 +6,25 @@ use App\Http\Controllers\Controller;
 use App\Models\Note;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'Notes', description: 'Note management endpoints')]
 class NoteController extends Controller
 {
-    /**
-     * Get all notes for a user with pagination
-     */
+    #[OA\Get(
+        path: '/notes',
+        summary: 'Get all notes for the authenticated user',
+        security: [['bearerAuth' => []]],
+        tags: ['Notes'],
+        parameters: [
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'List of notes with pagination'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function index(Request $request): JsonResponse
     {
         $request->validate([
@@ -35,9 +48,20 @@ class NoteController extends Controller
         ]);
     }
 
-    /**
-     * Get a single note
-     */
+    #[OA\Get(
+        path: '/notes/{id}',
+        summary: 'Get a single note',
+        security: [['bearerAuth' => []]],
+        tags: ['Notes'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Note details'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Note not found'),
+        ]
+    )]
     public function show(Request $request, int $id): JsonResponse
     {
         $note = Note::where('user_id', $request->user()->id)->findOrFail($id);
@@ -47,9 +71,26 @@ class NoteController extends Controller
         ]);
     }
 
-    /**
-     * Create a new note
-     */
+    #[OA\Post(
+        path: '/notes',
+        summary: 'Create a new note',
+        security: [['bearerAuth' => []]],
+        tags: ['Notes'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['content'],
+                properties: [
+                    new OA\Property(property: 'content', type: 'string'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Note created successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -65,9 +106,30 @@ class NoteController extends Controller
         ], 201);
     }
 
-    /**
-     * Update a note
-     */
+    #[OA\Put(
+        path: '/notes/{id}',
+        summary: 'Update a note',
+        security: [['bearerAuth' => []]],
+        tags: ['Notes'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['content'],
+                properties: [
+                    new OA\Property(property: 'content', type: 'string'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Note updated successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Note not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function update(Request $request, int $id): JsonResponse
     {
         $note = Note::where('user_id', $request->user()->id)->findOrFail($id);
@@ -84,9 +146,20 @@ class NoteController extends Controller
         ]);
     }
 
-    /**
-     * Soft delete a note
-     */
+    #[OA\Delete(
+        path: '/notes/{id}',
+        summary: 'Soft delete a note',
+        security: [['bearerAuth' => []]],
+        tags: ['Notes'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Note deleted successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Note not found'),
+        ]
+    )]
     public function destroy(Request $request, int $id): JsonResponse
     {
         $note = Note::where('user_id', $request->user()->id)->findOrFail($id);
@@ -97,9 +170,20 @@ class NoteController extends Controller
         ]);
     }
 
-    /**
-     * Restore a soft-deleted note
-     */
+    #[OA\Post(
+        path: '/notes/{id}/restore',
+        summary: 'Restore a soft-deleted note',
+        security: [['bearerAuth' => []]],
+        tags: ['Notes'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Note restored successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Note not found'),
+        ]
+    )]
     public function restore(Request $request, int $id): JsonResponse
     {
         $note = Note::withTrashed()
@@ -113,9 +197,20 @@ class NoteController extends Controller
         ]);
     }
 
-    /**
-     * Permanently delete a note
-     */
+    #[OA\Delete(
+        path: '/notes/{id}/force',
+        summary: 'Permanently delete a note',
+        security: [['bearerAuth' => []]],
+        tags: ['Notes'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Note permanently deleted'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Note not found'),
+        ]
+    )]
     public function forceDelete(Request $request, int $id): JsonResponse
     {
         $note = Note::withTrashed()

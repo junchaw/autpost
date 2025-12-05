@@ -5,12 +5,21 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\UserConfig;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'Config', description: 'User configuration endpoints')]
 class ConfigController extends Controller
 {
-    /**
-     * Get the user's dashboard configuration
-     */
+    #[OA\Get(
+        path: '/config',
+        summary: 'Get the user\'s dashboard configuration',
+        security: [['bearerAuth' => []]],
+        tags: ['Config'],
+        responses: [
+            new OA\Response(response: 200, description: 'User configuration'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function show(Request $request)
     {
         $userId = $request->user()->id;
@@ -31,9 +40,26 @@ class ConfigController extends Controller
         ]);
     }
 
-    /**
-     * Update the user's dashboard configuration
-     */
+    #[OA\Put(
+        path: '/config',
+        summary: 'Update the user\'s dashboard configuration',
+        security: [['bearerAuth' => []]],
+        tags: ['Config'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['config'],
+                properties: [
+                    new OA\Property(property: 'config', type: 'object', description: 'Dashboard configuration object'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Configuration updated successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function update(Request $request)
     {
         $request->validate([

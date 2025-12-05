@@ -6,17 +6,34 @@ use App\Http\Controllers\Controller;
 use App\Models\RecurringTodo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'RecurringTodos', description: 'Recurring todo management endpoints')]
 class RecurringTodoController extends Controller
 {
-    /**
-     * Get all recurring todos for a user
-     */
+    #[OA\Get(
+        path: '/recurring-todos',
+        summary: 'Get all recurring todos for the authenticated user',
+        security: [['bearerAuth' => []]],
+        tags: ['RecurringTodos'],
+        parameters: [
+            new OA\Parameter(name: 'state', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['active', 'paused'])),
+            new OA\Parameter(name: 'include_deleted', in: 'query', required: false, schema: new OA\Schema(type: 'boolean')),
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'List of recurring todos with pagination'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function index(Request $request): JsonResponse
     {
         $request->validate([
             'state' => 'nullable|in:active,paused',
             'include_deleted' => 'nullable|boolean',
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'page' => 'nullable|integer|min:1',
         ]);
 
         $query = RecurringTodo::where('user_id', $request->user()->id);
@@ -29,16 +46,35 @@ class RecurringTodoController extends Controller
             $query->withTrashed();
         }
 
-        $recurringTodos = $query->orderBy('created_at', 'desc')->get();
+        $perPage = $request->input('per_page', 10);
+
+        $recurringTodos = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage);
 
         return response()->json([
-            'recurring_todos' => $recurringTodos,
+            'recurring_todos' => $recurringTodos->items(),
+            'pagination' => [
+                'current_page' => $recurringTodos->currentPage(),
+                'per_page' => $recurringTodos->perPage(),
+                'total' => $recurringTodos->total(),
+            ],
         ]);
     }
 
-    /**
-     * Get a single recurring todo
-     */
+    #[OA\Get(
+        path: '/recurring-todos/{id}',
+        summary: 'Get a single recurring todo',
+        security: [['bearerAuth' => []]],
+        tags: ['RecurringTodos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Recurring todo details'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Recurring todo not found'),
+        ]
+    )]
     public function show(Request $request, int $id): JsonResponse
     {
         $recurringTodo = RecurringTodo::withTrashed()
@@ -51,9 +87,32 @@ class RecurringTodoController extends Controller
         ]);
     }
 
-    /**
-     * Create a new recurring todo
-     */
+    #[OA\Post(
+        path: '/recurring-todos',
+        summary: 'Create a new recurring todo',
+        security: [['bearerAuth' => []]],
+        tags: ['RecurringTodos'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['title', 'interval', 'interval_unit', 'start_time'],
+                properties: [
+                    new OA\Property(property: 'title', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'note', type: 'string', nullable: true),
+                    new OA\Property(property: 'interval', type: 'integer', minimum: 1),
+                    new OA\Property(property: 'interval_unit', type: 'string', enum: ['day', 'week', 'month', 'year']),
+                    new OA\Property(property: 'start_time', type: 'string', format: 'date-time'),
+                    new OA\Property(property: 'end_time', type: 'string', format: 'date-time', nullable: true),
+                    new OA\Property(property: 'state', type: 'string', enum: ['active', 'paused'], nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Recurring todo created successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -75,9 +134,35 @@ class RecurringTodoController extends Controller
         ], 201);
     }
 
-    /**
-     * Update a recurring todo
-     */
+    #[OA\Put(
+        path: '/recurring-todos/{id}',
+        summary: 'Update a recurring todo',
+        security: [['bearerAuth' => []]],
+        tags: ['RecurringTodos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'title', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'note', type: 'string', nullable: true),
+                    new OA\Property(property: 'interval', type: 'integer', minimum: 1),
+                    new OA\Property(property: 'interval_unit', type: 'string', enum: ['day', 'week', 'month', 'year']),
+                    new OA\Property(property: 'start_time', type: 'string', format: 'date-time'),
+                    new OA\Property(property: 'end_time', type: 'string', format: 'date-time', nullable: true),
+                    new OA\Property(property: 'state', type: 'string', enum: ['active', 'paused'], nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Recurring todo updated successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Recurring todo not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function update(Request $request, int $id): JsonResponse
     {
         $recurringTodo = RecurringTodo::where('user_id', $request->user()->id)->findOrFail($id);
@@ -100,9 +185,20 @@ class RecurringTodoController extends Controller
         ]);
     }
 
-    /**
-     * Soft delete a recurring todo
-     */
+    #[OA\Delete(
+        path: '/recurring-todos/{id}',
+        summary: 'Soft delete a recurring todo',
+        security: [['bearerAuth' => []]],
+        tags: ['RecurringTodos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Recurring todo deleted successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Recurring todo not found'),
+        ]
+    )]
     public function destroy(Request $request, int $id): JsonResponse
     {
         $recurringTodo = RecurringTodo::where('user_id', $request->user()->id)->findOrFail($id);
@@ -113,9 +209,20 @@ class RecurringTodoController extends Controller
         ]);
     }
 
-    /**
-     * Restore a soft-deleted recurring todo
-     */
+    #[OA\Post(
+        path: '/recurring-todos/{id}/restore',
+        summary: 'Restore a soft-deleted recurring todo',
+        security: [['bearerAuth' => []]],
+        tags: ['RecurringTodos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Recurring todo restored successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Recurring todo not found'),
+        ]
+    )]
     public function restore(Request $request, int $id): JsonResponse
     {
         $recurringTodo = RecurringTodo::withTrashed()
@@ -129,9 +236,20 @@ class RecurringTodoController extends Controller
         ]);
     }
 
-    /**
-     * Permanently delete a recurring todo
-     */
+    #[OA\Delete(
+        path: '/recurring-todos/{id}/force',
+        summary: 'Permanently delete a recurring todo',
+        security: [['bearerAuth' => []]],
+        tags: ['RecurringTodos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Recurring todo permanently deleted'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Recurring todo not found'),
+        ]
+    )]
     public function forceDelete(Request $request, int $id): JsonResponse
     {
         $recurringTodo = RecurringTodo::withTrashed()
@@ -144,9 +262,20 @@ class RecurringTodoController extends Controller
         ]);
     }
 
-    /**
-     * Pause a recurring todo
-     */
+    #[OA\Post(
+        path: '/recurring-todos/{id}/pause',
+        summary: 'Pause a recurring todo',
+        security: [['bearerAuth' => []]],
+        tags: ['RecurringTodos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Recurring todo paused'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Recurring todo not found'),
+        ]
+    )]
     public function pause(Request $request, int $id): JsonResponse
     {
         $recurringTodo = RecurringTodo::where('user_id', $request->user()->id)->findOrFail($id);
@@ -158,9 +287,20 @@ class RecurringTodoController extends Controller
         ]);
     }
 
-    /**
-     * Resume a recurring todo
-     */
+    #[OA\Post(
+        path: '/recurring-todos/{id}/resume',
+        summary: 'Resume a recurring todo',
+        security: [['bearerAuth' => []]],
+        tags: ['RecurringTodos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Recurring todo resumed'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Recurring todo not found'),
+        ]
+    )]
     public function resume(Request $request, int $id): JsonResponse
     {
         $recurringTodo = RecurringTodo::where('user_id', $request->user()->id)->findOrFail($id);

@@ -52,7 +52,7 @@ make dev       # Start both servers
 ```bash
 cd backend
 composer install
-php artisan serve  # http://localhost:8000
+php artisan serve --port=9527  # http://localhost:9527
 ```
 
 **Frontend:**
@@ -136,7 +136,7 @@ php artisan migrate
 
 Key variables in `backend/.env`:
 
-- `APP_URL=http://localhost:8000` - Backend URL
+- `APP_URL=http://localhost:9527` - Backend URL
 - `DB_CONNECTION=sqlite` - Database driver
 - `FRONTEND_URL=http://localhost:5173` - Frontend URL for CORS
 
@@ -144,7 +144,7 @@ Key variables in `backend/.env`:
 
 Key variables in `.env` (root level):
 
-- `VITE_API_URL=http://localhost:8000` - Backend API URL
+- `VITE_API_URL=http://localhost:9527` - Backend API URL
 
 ## Running Both Servers
 
@@ -163,7 +163,7 @@ php artisan serve
 pnpm run dev
 ```
 
-Then visit http://localhost:5173 to see the frontend, which will communicate with the backend API at http://localhost:8000.
+Then visit http://localhost:5173 to see the frontend, which will communicate with the backend API at http://localhost:9527.
 
 ## Documentation
 

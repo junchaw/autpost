@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 interface ParsedURL {
   protocol: string;
@@ -14,14 +14,10 @@ interface ParsedURL {
 
 export function URLParserPanel() {
   const [input, setInput] = useState('');
-  const [parsed, setParsed] = useState<ParsedURL | null>(null);
-  const [error, setError] = useState<string>('');
 
-  useEffect(() => {
+  const { parsed, error } = useMemo(() => {
     if (!input) {
-      setParsed(null);
-      setError('');
-      return;
+      return { parsed: null, error: '' };
     }
 
     try {
@@ -31,21 +27,25 @@ export function URLParserPanel() {
         params.push({ key, value });
       });
 
-      setParsed({
-        protocol: url.protocol,
-        hostname: url.hostname,
-        port: url.port,
-        pathname: url.pathname,
-        search: url.search,
-        searchParams: params,
-        hash: url.hash,
-        origin: url.origin,
-        href: url.href,
-      });
-      setError('');
+      return {
+        parsed: {
+          protocol: url.protocol,
+          hostname: url.hostname,
+          port: url.port,
+          pathname: url.pathname,
+          search: url.search,
+          searchParams: params,
+          hash: url.hash,
+          origin: url.origin,
+          href: url.href,
+        } as ParsedURL,
+        error: '',
+      };
     } catch (err) {
-      setParsed(null);
-      setError(err instanceof Error ? err.message : 'Invalid URL');
+      return {
+        parsed: null,
+        error: err instanceof Error ? err.message : 'Invalid URL',
+      };
     }
   }, [input]);
 

@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\AccessLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\RecurringTodoController;
+use App\Http\Controllers\Api\RoleBindingController;
+use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -53,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [TodoController::class, 'update']);
         Route::delete('/{id}', [TodoController::class, 'destroy']);
         Route::post('/{id}/restore', [TodoController::class, 'restore']);
-        Route::delete('/{id}/force', [TodoController::class, 'forceDelete']);
+        Route::delete('/{id}/force', [TodoController::class, 'forceDelete'])->middleware('permission:hard_delete');
     });
 
     // Recurring Todo routes
@@ -64,7 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [RecurringTodoController::class, 'update']);
         Route::delete('/{id}', [RecurringTodoController::class, 'destroy']);
         Route::post('/{id}/restore', [RecurringTodoController::class, 'restore']);
-        Route::delete('/{id}/force', [RecurringTodoController::class, 'forceDelete']);
+        Route::delete('/{id}/force', [RecurringTodoController::class, 'forceDelete'])->middleware('permission:hard_delete');
 
         Route::post('/{id}/pause', [RecurringTodoController::class, 'pause']);
         Route::post('/{id}/resume', [RecurringTodoController::class, 'resume']);
@@ -78,6 +81,35 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [NoteController::class, 'update']);
         Route::delete('/{id}', [NoteController::class, 'destroy']);
         Route::post('/{id}/restore', [NoteController::class, 'restore']);
-        Route::delete('/{id}/force', [NoteController::class, 'forceDelete']);
+        Route::delete('/{id}/force', [NoteController::class, 'forceDelete'])->middleware('permission:hard_delete');
     });
+
+    // Access Log routes
+    Route::prefix('access-logs')->group(function () {
+        Route::get('/', [AccessLogController::class, 'index']);
+        Route::post('/', [AccessLogController::class, 'store']);
+        Route::get('/{id}', [AccessLogController::class, 'show']);
+        Route::put('/{id}', [AccessLogController::class, 'update']);
+        Route::delete('/{id}', [AccessLogController::class, 'destroy']);
+    });
+
+    // Role routes
+    Route::prefix('roles')->group(function () {
+        Route::get('/', [RoleController::class, 'index']);
+        Route::post('/', [RoleController::class, 'store']);
+        Route::get('/{id}', [RoleController::class, 'show']);
+        Route::put('/{id}', [RoleController::class, 'update']);
+        Route::delete('/{id}', [RoleController::class, 'destroy']);
+    });
+
+    // Role Binding routes
+    Route::prefix('role-bindings')->group(function () {
+        Route::get('/', [RoleBindingController::class, 'index']);
+        Route::post('/', [RoleBindingController::class, 'store']);
+        Route::get('/{id}', [RoleBindingController::class, 'show']);
+        Route::delete('/{id}', [RoleBindingController::class, 'destroy']);
+    });
+
+    // Users list for role binding
+    Route::get('/users', [RoleBindingController::class, 'users']);
 });

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
 use App\Models\User;
 use App\Models\UserConfig;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -45,9 +46,16 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            RoleSeeder::class,
             RecurringTodoSeeder::class,
             TodoSeeder::class,
             NoteSeeder::class,
         ]);
+
+        // Bind admin role to test user
+        $adminRole = Role::where('name', 'admin')->first();
+        if ($adminRole) {
+            $user->roles()->sync([$adminRole->id]);
+        }
     }
 }

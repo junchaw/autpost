@@ -124,7 +124,7 @@ composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
-php artisan serve  # http://localhost:8000
+php artisan serve --port=9527  # http://localhost:9527
 ```
 
 2. **Frontend:**

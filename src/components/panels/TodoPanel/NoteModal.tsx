@@ -12,15 +12,30 @@ interface NoteModalProps {
 }
 
 export function NoteModal({ isOpen, onClose, todo, onSave }: NoteModalProps) {
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(() => todo?.note || '');
   const contentRef = useRef(content);
-  contentRef.current = content;
+  const previousTodoIdRef = useRef<number | null>(todo?.id ?? null);
 
   const isEditing = !!todo?.note;
 
   useEffect(() => {
+    contentRef.current = content;
+  }, [content]);
+
+  // Reset content when todo changes
+  useEffect(() => {
     if (isOpen && todo) {
-      setContent(todo.note || '');
+      const todoId = todo.id;
+      if (previousTodoIdRef.current !== todoId) {
+        previousTodoIdRef.current = todoId;
+        const newContent = todo.note || '';
+        // Schedule state update to avoid synchronous setState in effect
+        queueMicrotask(() => {
+          setContent(newContent);
+        });
+      }
+    } else if (!isOpen) {
+      previousTodoIdRef.current = null;
     }
   }, [isOpen, todo]);
 

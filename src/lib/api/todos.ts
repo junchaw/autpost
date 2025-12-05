@@ -35,7 +35,7 @@ export interface UpdateTodoInput {
 }
 
 export interface TodoListParams {
-  state?: TodoState;
+  states?: TodoState[];
   page?: number;
   perPage?: number;
 }
@@ -43,7 +43,7 @@ export interface TodoListParams {
 export const todosApi = {
   list: (params: TodoListParams = {}) => {
     const searchParams = new URLSearchParams();
-    if (params.state) searchParams.set('state', params.state);
+    if (params.states?.length) searchParams.set('states', params.states.join(','));
     if (params.page) searchParams.set('page', params.page.toString());
     if (params.perPage) searchParams.set('per_page', params.perPage.toString());
     const query = searchParams.toString();

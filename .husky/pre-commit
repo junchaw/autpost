@@ -1,2 +1,6 @@
+# Run backend linter
+cd backend && ./vendor/bin/pint --test
 
+# Go back to root for lint-staged
+cd ..
 npx lint-staged

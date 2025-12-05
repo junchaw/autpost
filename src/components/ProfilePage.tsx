@@ -12,7 +12,7 @@ import {
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 import { api, ApiValidationError } from '../lib/api';
 
 function getInitials(name: string): string {

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { ArrowLeftRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { CodeBlock } from '../CodeBlock';
 
 /**
@@ -46,26 +46,33 @@ export function TextEncodeDecodeShared({
   const [plainText, setPlainText] = useState('');
   const [encodedText, setEncodedText] = useState('');
   const [mode, setMode] = useState<'encode' | 'decode'>('encode');
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    setError('');
+  // Compute derived values
+  const { computedEncoded, computedPlain, error } = useMemo(() => {
+    let errorValue = '';
+    let encodedValue = '';
+    let plainValue = '';
+
     try {
       if (mode === 'encode') {
-        const encoded = plainText ? encode(plainText) : '';
-        setEncodedText(encoded);
+        encodedValue = plainText ? encode(plainText) : '';
       } else {
-        const decoded = encodedText ? decode(encodedText) : '';
-        setPlainText(decoded);
+        plainValue = encodedText ? decode(encodedText) : '';
       }
-    } catch (err) {
-      setError(errorMessage);
+    } catch {
+      errorValue = errorMessage;
       if (mode === 'encode') {
-        setEncodedText('');
+        encodedValue = '';
       } else {
-        setPlainText('');
+        plainValue = '';
       }
     }
+
+    return {
+      computedEncoded: encodedValue,
+      computedPlain: plainValue,
+      error: errorValue,
+    };
   }, [plainText, encodedText, mode, encode, decode, errorMessage]);
 
   const toggleMode = () => {
@@ -94,7 +101,7 @@ export function TextEncodeDecodeShared({
               className="textarea textarea-bordered w-full resize-none font-mono"
             />
           ) : (
-            <CodeBlock code={plainText} />
+            <CodeBlock code={computedPlain || plainText} />
           )}
         </div>
 
@@ -123,7 +130,7 @@ export function TextEncodeDecodeShared({
               className="textarea textarea-bordered w-full resize-none font-mono"
             />
           ) : (
-            <CodeBlock code={encodedText} />
+            <CodeBlock code={computedEncoded || encodedText} />
           )}
         </div>
       </div>

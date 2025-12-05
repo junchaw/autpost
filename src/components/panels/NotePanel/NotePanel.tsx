@@ -32,9 +32,26 @@ export function NotePanel() {
   const [modalContent, setModalContent] = useState('');
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  const loadNotes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await api.notes.list({
+        page: currentPage,
+        perPage: PER_PAGE,
+      });
+      setNotes(response.notes);
+      setPagination(response.pagination);
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load notes');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
+
   useEffect(() => {
     loadNotes();
-  }, [currentPage]);
+  }, [loadNotes]);
 
   const isModalOpen = isAddingNew || editingNote !== null;
 
@@ -64,23 +81,6 @@ export function NotePanel() {
     dialog.addEventListener('close', closeModal);
     return () => dialog.removeEventListener('close', closeModal);
   }, [closeModal]);
-
-  const loadNotes = async () => {
-    try {
-      setLoading(true);
-      const response = await api.notes.list({
-        page: currentPage,
-        perPage: PER_PAGE,
-      });
-      setNotes(response.notes);
-      setPagination(response.pagination);
-      setError('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load notes');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const openAddModal = () => {
     setIsAddingNew(true);
@@ -186,7 +186,7 @@ export function NotePanel() {
       </div>
 
       {/* Pagination */}
-      {pagination && pagination.total > pagination.per_page && (
+      {pagination && (
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-base-300">
           <span className="text-xs text-base-content/50">{pagination.total} notes</span>
           <div className="flex items-center gap-1">
@@ -198,7 +198,7 @@ export function NotePanel() {
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="text-xs px-2">
-              {currentPage} / {Math.ceil(pagination.total / pagination.per_page)}
+              {currentPage} / {Math.max(1, Math.ceil(pagination.total / pagination.per_page))}
             </span>
             <button
               className="btn btn-ghost btn-xs btn-circle"

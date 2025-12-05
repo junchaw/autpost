@@ -6,16 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Models\Todo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'Todos', description: 'Todo management endpoints')]
 class TodoController extends Controller
 {
-    /**
-     * Get all todos for a user with pagination
-     */
+    #[OA\Get(
+        path: '/todos',
+        summary: 'Get all todos for the authenticated user',
+        security: [['bearerAuth' => []]],
+        tags: ['Todos'],
+        parameters: [
+            new OA\Parameter(name: 'states', in: 'query', required: false, schema: new OA\Schema(type: 'string', description: 'Comma-separated states to filter by (e.g., pending,in_progress)')),
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'List of todos with pagination'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'state' => 'nullable|in:pending,in_progress,completed,cancelled',
+            'states' => 'nullable|string',
             'include_deleted' => 'nullable|boolean',
             'per_page' => 'nullable|integer|min:1|max:100',
             'page' => 'nullable|integer|min:1',
@@ -23,8 +37,11 @@ class TodoController extends Controller
 
         $query = Todo::where('user_id', $request->user()->id);
 
-        if ($request->has('state')) {
-            $query->where('state', $request->input('state'));
+        if ($request->has('states')) {
+            $states = array_filter(explode(',', $request->input('states')));
+            if (! empty($states)) {
+                $query->whereIn('state', $states);
+            }
         }
 
         if ($request->boolean('include_deleted')) {
@@ -47,9 +64,19 @@ class TodoController extends Controller
         ]);
     }
 
-    /**
-     * Get a single todo
-     */
+    #[OA\Get(
+        path: '/todos/{id}',
+        summary: 'Get a single todo',
+        security: [['bearerAuth' => []]],
+        tags: ['Todos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Todo details'),
+            new OA\Response(response: 404, description: 'Todo not found'),
+        ]
+    )]
     public function show(Request $request, int $id): JsonResponse
     {
         $todo = Todo::withTrashed()
@@ -61,9 +88,31 @@ class TodoController extends Controller
         ]);
     }
 
-    /**
-     * Create a new todo
-     */
+    #[OA\Post(
+        path: '/todos',
+        summary: 'Create a new todo',
+        security: [['bearerAuth' => []]],
+        tags: ['Todos'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['title'],
+                properties: [
+                    new OA\Property(property: 'recurring_todo_id', type: 'integer', nullable: true),
+                    new OA\Property(property: 'title', type: 'string', maxLength: 25),
+                    new OA\Property(property: 'note', type: 'string', maxLength: 25, nullable: true),
+                    new OA\Property(property: 'due_time', type: 'string', format: 'date-time', nullable: true),
+                    new OA\Property(property: 'is_whole_day', type: 'boolean', nullable: true),
+                    new OA\Property(property: 'state', type: 'string', enum: ['pending', 'in_progress', 'completed', 'cancelled'], nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Todo created successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -84,9 +133,33 @@ class TodoController extends Controller
         ], 201);
     }
 
-    /**
-     * Update a todo
-     */
+    #[OA\Put(
+        path: '/todos/{id}',
+        summary: 'Update a todo',
+        security: [['bearerAuth' => []]],
+        tags: ['Todos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'title', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'note', type: 'string', nullable: true),
+                    new OA\Property(property: 'due_time', type: 'string', format: 'date-time', nullable: true),
+                    new OA\Property(property: 'is_whole_day', type: 'boolean', nullable: true),
+                    new OA\Property(property: 'state', type: 'string', enum: ['pending', 'in_progress', 'completed', 'cancelled'], nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Todo updated successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Todo not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function update(Request $request, int $id): JsonResponse
     {
         $todo = Todo::where('user_id', $request->user()->id)->findOrFail($id);
@@ -107,9 +180,20 @@ class TodoController extends Controller
         ]);
     }
 
-    /**
-     * Soft delete a todo
-     */
+    #[OA\Delete(
+        path: '/todos/{id}',
+        summary: 'Soft delete a todo',
+        security: [['bearerAuth' => []]],
+        tags: ['Todos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Todo deleted successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Todo not found'),
+        ]
+    )]
     public function destroy(Request $request, int $id): JsonResponse
     {
         $todo = Todo::where('user_id', $request->user()->id)->findOrFail($id);
@@ -120,9 +204,20 @@ class TodoController extends Controller
         ]);
     }
 
-    /**
-     * Restore a soft-deleted todo
-     */
+    #[OA\Post(
+        path: '/todos/{id}/restore',
+        summary: 'Restore a soft-deleted todo',
+        security: [['bearerAuth' => []]],
+        tags: ['Todos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Todo restored successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Todo not found'),
+        ]
+    )]
     public function restore(Request $request, int $id): JsonResponse
     {
         $todo = Todo::withTrashed()
@@ -136,9 +231,20 @@ class TodoController extends Controller
         ]);
     }
 
-    /**
-     * Permanently delete a todo
-     */
+    #[OA\Delete(
+        path: '/todos/{id}/force',
+        summary: 'Permanently delete a todo',
+        security: [['bearerAuth' => []]],
+        tags: ['Todos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Todo permanently deleted'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 404, description: 'Todo not found'),
+        ]
+    )]
     public function forceDelete(Request $request, int $id): JsonResponse
     {
         $todo = Todo::withTrashed()

@@ -10,12 +10,34 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'User', description: 'User profile management endpoints')]
 class UserController extends Controller
 {
-    /**
-     * Upload user avatar.
-     */
+    #[OA\Post(
+        path: '/user/avatar',
+        summary: 'Upload user avatar',
+        security: [['bearerAuth' => []]],
+        tags: ['User'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['avatar'],
+                    properties: [
+                        new OA\Property(property: 'avatar', type: 'string', format: 'binary'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Avatar uploaded successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function uploadAvatar(Request $request)
     {
         $request->validate([
@@ -46,9 +68,16 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Delete user avatar.
-     */
+    #[OA\Delete(
+        path: '/user/avatar',
+        summary: 'Delete user avatar',
+        security: [['bearerAuth' => []]],
+        tags: ['User'],
+        responses: [
+            new OA\Response(response: 200, description: 'Avatar deleted successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function deleteAvatar(Request $request)
     {
         $user = $request->user();
@@ -65,9 +94,25 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Update user profile.
-     */
+    #[OA\Patch(
+        path: '/user/profile',
+        summary: 'Update user profile',
+        security: [['bearerAuth' => []]],
+        tags: ['User'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', maxLength: 255),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Profile updated successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function updateProfile(Request $request)
     {
         $request->validate([
@@ -88,9 +133,26 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Request email change - sends verification code to new email.
-     */
+    #[OA\Post(
+        path: '/user/email/request',
+        summary: 'Request email change - sends verification code to new email',
+        security: [['bearerAuth' => []]],
+        tags: ['User'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Verification code sent'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function emailChangeRequest(Request $request)
     {
         $request->validate([
@@ -111,9 +173,27 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Verify email change code and update email.
-     */
+    #[OA\Post(
+        path: '/user/email/verify',
+        summary: 'Verify email change code and update email',
+        security: [['bearerAuth' => []]],
+        tags: ['User'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'code'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email'),
+                    new OA\Property(property: 'code', type: 'string', minLength: 6, maxLength: 6),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Email updated successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function emailChangeVerify(Request $request)
     {
         $request->validate([
@@ -159,9 +239,28 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Change user password.
-     */
+    #[OA\Post(
+        path: '/user/password',
+        summary: 'Change user password',
+        security: [['bearerAuth' => []]],
+        tags: ['User'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['current_password', 'password', 'password_confirmation'],
+                properties: [
+                    new OA\Property(property: 'current_password', type: 'string'),
+                    new OA\Property(property: 'password', type: 'string', minLength: 8),
+                    new OA\Property(property: 'password_confirmation', type: 'string'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Password changed successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function changePassword(Request $request)
     {
         $request->validate([

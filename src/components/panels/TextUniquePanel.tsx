@@ -1,15 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 export function TextUniquePanel() {
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
   const [sort, setSort] = useState(false);
   const [reverse, setReverse] = useState(false);
 
-  useEffect(() => {
+  const output = useMemo(() => {
     if (!input) {
-      setOutput('');
-      return;
+      return '';
     }
 
     const lines = input.split('\n');
@@ -22,7 +20,7 @@ export function TextUniquePanel() {
       }
     }
 
-    setOutput(uniqueLines.join('\n'));
+    return uniqueLines.join('\n');
   }, [input, sort, reverse]);
 
   return (

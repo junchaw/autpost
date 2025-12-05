@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 interface DiffLine {
   type: 'same' | 'removed' | 'added';
@@ -8,33 +8,29 @@ interface DiffLine {
 export function TextDiffPanel() {
   const [text1, setText1] = useState('');
   const [text2, setText2] = useState('');
-  const [diffLines, setDiffLines] = useState<DiffLine[]>([]);
 
-  useEffect(() => {
-    if (!text1 && !text2) {
-      setDiffLines([]);
-      return;
-    }
-
-    const lines1 = text1.split('\n');
-    const lines2 = text2.split('\n');
-    const maxLines = Math.max(lines1.length, lines2.length);
-
+  const diffLines = useMemo(() => {
     const diff: DiffLine[] = [];
 
-    for (let i = 0; i < maxLines; i++) {
-      const line1 = lines1[i] || '';
-      const line2 = lines2[i] || '';
+    if (text1 || text2) {
+      const lines1 = text1.split('\n');
+      const lines2 = text2.split('\n');
+      const maxLines = Math.max(lines1.length, lines2.length);
 
-      if (line1 === line2) {
-        diff.push({ type: 'same', content: `  ${line1}` });
-      } else {
-        if (line1) diff.push({ type: 'removed', content: `- ${line1}` });
-        if (line2) diff.push({ type: 'added', content: `+ ${line2}` });
+      for (let i = 0; i < maxLines; i++) {
+        const line1 = lines1[i] || '';
+        const line2 = lines2[i] || '';
+
+        if (line1 === line2) {
+          diff.push({ type: 'same', content: `  ${line1}` });
+        } else {
+          if (line1) diff.push({ type: 'removed', content: `- ${line1}` });
+          if (line2) diff.push({ type: 'added', content: `+ ${line2}` });
+        }
       }
     }
 
-    setDiffLines(diff);
+    return diff;
   }, [text1, text2]);
 
   return (

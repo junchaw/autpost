@@ -192,7 +192,7 @@ class GenerateRecurringTodos implements ShouldQueue
 
             $currentTime = $firstOccurrence;
             while ($currentTime->lte($rangeEnd)) {
-                $occurrences[] = $currentDate->copy();
+                $occurrences[] = $currentTime->copy();
                 $currentTime = $this->addInterval($currentTime, $recurringTodo);
             }
         }

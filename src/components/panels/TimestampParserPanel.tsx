@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 interface ParsedTimestamp {
   unix: number;
@@ -91,8 +91,6 @@ export function TimestampParserPanel() {
   const [input, setInput] = useState('');
   const [timezone, setTimezone] = useState('UTC');
   const [timezoneSearch, setTimezoneSearch] = useState('');
-  const [parsed, setParsed] = useState<ParsedTimestamp | null>(null);
-  const [error, setError] = useState<string>('');
 
   const filteredTimezones = timezoneSearch
     ? ALL_TIMEZONES.filter(
@@ -102,11 +100,9 @@ export function TimestampParserPanel() {
       )
     : ALL_TIMEZONES;
 
-  useEffect(() => {
+  const { parsed, error } = useMemo(() => {
     if (!input) {
-      setParsed(null);
-      setError('');
-      return;
+      return { parsed: null, error: '' };
     }
 
     try {
@@ -128,9 +124,7 @@ export function TimestampParserPanel() {
       }
 
       if (isNaN(date.getTime())) {
-        setError('Invalid timestamp or date format');
-        setParsed(null);
-        return;
+        return { parsed: null, error: 'Invalid timestamp or date format' };
       }
 
       // Format in selected timezone
@@ -147,27 +141,31 @@ export function TimestampParserPanel() {
 
       const selectedTimezoneString = tzFormatter.format(date);
 
-      setParsed({
-        unix: Math.floor(date.getTime() / 1000),
-        unixMs: date.getTime(),
-        iso8601: date.toISOString(),
-        utc: date.toUTCString(),
-        localTime: date.toLocaleString(),
-        selectedTimezone: selectedTimezoneString,
-        components: {
-          year: date.getFullYear(),
-          month: date.getMonth() + 1,
-          day: date.getDate(),
-          hour: date.getHours(),
-          minute: date.getMinutes(),
-          second: date.getSeconds(),
-          millisecond: date.getMilliseconds(),
-        },
-      });
-      setError('');
+      return {
+        parsed: {
+          unix: Math.floor(date.getTime() / 1000),
+          unixMs: date.getTime(),
+          iso8601: date.toISOString(),
+          utc: date.toUTCString(),
+          localTime: date.toLocaleString(),
+          selectedTimezone: selectedTimezoneString,
+          components: {
+            year: date.getFullYear(),
+            month: date.getMonth() + 1,
+            day: date.getDate(),
+            hour: date.getHours(),
+            minute: date.getMinutes(),
+            second: date.getSeconds(),
+            millisecond: date.getMilliseconds(),
+          },
+        } as ParsedTimestamp,
+        error: '',
+      };
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse timestamp');
-      setParsed(null);
+      return {
+        parsed: null,
+        error: err instanceof Error ? err.message : 'Failed to parse timestamp',
+      };
     }
   }, [input, timezone]);
 

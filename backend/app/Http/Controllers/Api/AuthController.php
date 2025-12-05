@@ -9,12 +9,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'Auth', description: 'Authentication endpoints')]
 class AuthController extends Controller
 {
-    /**
-     * Login and create a new token.
-     */
+    #[OA\Post(
+        path: '/login',
+        summary: 'Login and create a new token',
+        tags: ['Auth'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'password'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email'),
+                    new OA\Property(property: 'password', type: 'string'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Login successful'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function login(Request $request)
     {
         $request->validate([
@@ -54,9 +72,16 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Logout and revoke the current token.
-     */
+    #[OA\Post(
+        path: '/logout',
+        summary: 'Logout and revoke the current token',
+        security: [['bearerAuth' => []]],
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(response: 200, description: 'Logged out successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function logout(Request $request)
     {
         // Revoke the current token
@@ -67,9 +92,16 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Get the authenticated user.
-     */
+    #[OA\Get(
+        path: '/user',
+        summary: 'Get the authenticated user',
+        security: [['bearerAuth' => []]],
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(response: 200, description: 'User data'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function user(Request $request)
     {
         $user = $request->user();

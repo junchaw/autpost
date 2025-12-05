@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 export function FindTextDuplicationPanel() {
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
 
-  useEffect(() => {
+  const output = useMemo(() => {
     if (!input) {
-      setOutput('');
-      return;
+      return '';
     }
 
     const lines = input.split('\n');
@@ -24,11 +22,7 @@ export function FindTextDuplicationPanel() {
       .map(([line, count]) => `${line} ${count}`)
       .join('\n');
 
-    if (duplicates) {
-      setOutput(duplicates);
-    } else {
-      setOutput('No duplicates found.');
-    }
+    return duplicates || 'No duplicates found.';
   }, [input]);
 
   return (
