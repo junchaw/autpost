@@ -27,6 +27,12 @@ export interface RoleListParams {
   perPage?: number;
 }
 
+export interface PermissionOption {
+  value: string;
+  label: string;
+  description: string;
+}
+
 export interface UserSummary {
   id: number;
   name: string;
@@ -69,6 +75,8 @@ export const rolesApi = {
     const query = searchParams.toString();
     return fetchApi<{ roles: Role[]; pagination: Pagination }>(`/roles${query ? `?${query}` : ''}`);
   },
+
+  permissions: () => fetchApi<{ permissions: PermissionOption[] }>('/roles/permissions'),
 
   get: (id: number) => fetchApi<{ role: Role }>(`/roles/${id}`),
 

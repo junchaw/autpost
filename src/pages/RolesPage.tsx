@@ -14,19 +14,25 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { api, type Pagination, type Role, type RoleBinding, type UserSummary } from '../lib/api';
-
-const AVAILABLE_PERMISSIONS = ['hard_delete', 'admin', 'manage_users', 'manage_roles'];
+import {
+  api,
+  type Pagination,
+  type PermissionOption,
+  type Role,
+  type RoleBinding,
+  type UserSummary,
+} from '../lib/api';
 
 interface RoleModalProps {
   isOpen: boolean;
   onClose: () => void;
   role: Role | null;
   mode: 'view' | 'edit' | 'create';
+  permissions: PermissionOption[];
   onSave: () => void;
 }
 
-function RoleModal({ isOpen, onClose, role, mode, onSave }: RoleModalProps) {
+function RoleModal({ isOpen, onClose, role, mode, permissions, onSave }: RoleModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -141,26 +147,32 @@ function RoleModal({ isOpen, onClose, role, mode, onSave }: RoleModalProps) {
             <label className="label">
               <span className="label-text">Permissions</span>
             </label>
-            <div className="flex flex-wrap gap-2">
-              {AVAILABLE_PERMISSIONS.map((permission) => (
+            <div className="space-y-2">
+              {permissions.map((perm) => (
                 <label
-                  key={permission}
-                  className={`cursor-pointer label gap-2 p-2 rounded-lg border ${
-                    formData.permissions.includes(permission)
+                  key={perm.value}
+                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    formData.permissions.includes(perm.value)
                       ? 'bg-primary/10 border-primary'
-                      : 'bg-base-200 border-base-300'
+                      : 'bg-base-200 border-base-300 hover:border-base-content/20'
                   } ${isReadOnly ? 'cursor-default' : ''}`}
                 >
                   <input
                     type="checkbox"
-                    className="checkbox checkbox-sm checkbox-primary"
-                    checked={formData.permissions.includes(permission)}
-                    onChange={() => togglePermission(permission)}
+                    className="checkbox checkbox-sm checkbox-primary mt-0.5"
+                    checked={formData.permissions.includes(perm.value)}
+                    onChange={() => togglePermission(perm.value)}
                     disabled={isReadOnly}
                   />
-                  <span className="label-text text-sm">{permission}</span>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{perm.label}</div>
+                    <div className="text-xs text-base-content/60">{perm.description}</div>
+                  </div>
                 </label>
               ))}
+              {permissions.length === 0 && (
+                <div className="text-sm text-base-content/60">Loading permissions...</div>
+              )}
             </div>
           </div>
 
@@ -372,6 +384,9 @@ function RoleBindingModal({ isOpen, onClose, roles, onSave }: RoleBindingModalPr
 export function RolesPage() {
   const [activeTab, setActiveTab] = useState<'roles' | 'bindings'>('roles');
 
+  // Permissions
+  const [availablePermissions, setAvailablePermissions] = useState<PermissionOption[]>([]);
+
   // Roles state
   const [roles, setRoles] = useState<Role[]>([]);
   const [rolesPagination, setRolesPagination] = useState<Pagination | null>(null);
@@ -394,6 +409,19 @@ export function RolesPage() {
   // Delete confirmation
   const [deleteRoleId, setDeleteRoleId] = useState<number | null>(null);
   const [deleteBindingId, setDeleteBindingId] = useState<number | null>(null);
+
+  // Load permissions on mount
+  useEffect(() => {
+    const loadPermissions = async () => {
+      try {
+        const response = await api.roles.permissions();
+        setAvailablePermissions(response.permissions);
+      } catch {
+        toast.error('Failed to load permissions');
+      }
+    };
+    loadPermissions();
+  }, []);
 
   const loadRoles = useCallback(async () => {
     setRolesLoading(true);
@@ -737,6 +765,7 @@ export function RolesPage() {
         onClose={() => setRoleModalOpen(false)}
         role={selectedRole}
         mode={roleModalMode}
+        permissions={availablePermissions}
         onSave={loadRoles}
       />
 

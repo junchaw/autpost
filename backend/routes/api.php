@@ -1,8 +1,11 @@
 <?php
 
+use App\Enums\Permission;
 use App\Http\Controllers\Api\AccessLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConfigController;
+use App\Http\Controllers\Api\GenericDefinitionController;
+use App\Http\Controllers\Api\GenericResourceController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\RecurringTodoController;
 use App\Http\Controllers\Api\RoleBindingController;
@@ -56,18 +59,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [TodoController::class, 'update']);
         Route::delete('/{id}', [TodoController::class, 'destroy']);
         Route::post('/{id}/restore', [TodoController::class, 'restore']);
-        Route::delete('/{id}/force', [TodoController::class, 'forceDelete'])->middleware('permission:hard_delete');
+        Route::delete('/{id}/force', [TodoController::class, 'forceDelete'])->middleware('permission:'.Permission::HARD_DELETE);
     });
 
     // Recurring Todo routes
     Route::prefix('recurring-todos')->group(function () {
         Route::get('/', [RecurringTodoController::class, 'index']);
         Route::post('/', [RecurringTodoController::class, 'store']);
+        Route::post('/generate', [RecurringTodoController::class, 'generate'])->middleware('permission:'.Permission::GENERATE_RECURRING_TODOS);
         Route::get('/{id}', [RecurringTodoController::class, 'show']);
         Route::put('/{id}', [RecurringTodoController::class, 'update']);
         Route::delete('/{id}', [RecurringTodoController::class, 'destroy']);
         Route::post('/{id}/restore', [RecurringTodoController::class, 'restore']);
-        Route::delete('/{id}/force', [RecurringTodoController::class, 'forceDelete'])->middleware('permission:hard_delete');
+        Route::delete('/{id}/force', [RecurringTodoController::class, 'forceDelete'])->middleware('permission:'.Permission::HARD_DELETE);
 
         Route::post('/{id}/pause', [RecurringTodoController::class, 'pause']);
         Route::post('/{id}/resume', [RecurringTodoController::class, 'resume']);
@@ -81,7 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [NoteController::class, 'update']);
         Route::delete('/{id}', [NoteController::class, 'destroy']);
         Route::post('/{id}/restore', [NoteController::class, 'restore']);
-        Route::delete('/{id}/force', [NoteController::class, 'forceDelete'])->middleware('permission:hard_delete');
+        Route::delete('/{id}/force', [NoteController::class, 'forceDelete'])->middleware('permission:'.Permission::HARD_DELETE);
     });
 
     // Access Log routes
@@ -95,6 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Role routes
     Route::prefix('roles')->group(function () {
+        Route::get('/permissions', [RoleController::class, 'permissions']);
         Route::get('/', [RoleController::class, 'index']);
         Route::post('/', [RoleController::class, 'store']);
         Route::get('/{id}', [RoleController::class, 'show']);
@@ -112,4 +117,24 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Users list for role binding
     Route::get('/users', [RoleBindingController::class, 'users']);
+
+    // Generic Definition routes (MongoDB)
+    Route::prefix('definitions')->group(function () {
+        Route::get('/field-types', [GenericDefinitionController::class, 'fieldTypes']);
+        Route::get('/', [GenericDefinitionController::class, 'index']);
+        Route::post('/', [GenericDefinitionController::class, 'store']);
+        Route::get('/by-type/{type}', [GenericDefinitionController::class, 'showByType']);
+        Route::get('/{id}', [GenericDefinitionController::class, 'show']);
+        Route::put('/{id}', [GenericDefinitionController::class, 'update']);
+        Route::delete('/{id}', [GenericDefinitionController::class, 'destroy']);
+    });
+
+    // Generic Resource routes (MongoDB)
+    Route::prefix('resources')->group(function () {
+        Route::get('/{type}', [GenericResourceController::class, 'index']);
+        Route::post('/{type}', [GenericResourceController::class, 'store']);
+        Route::get('/{type}/{id}', [GenericResourceController::class, 'show']);
+        Route::put('/{type}/{id}', [GenericResourceController::class, 'update']);
+        Route::delete('/{type}/{id}', [GenericResourceController::class, 'destroy']);
+    });
 });

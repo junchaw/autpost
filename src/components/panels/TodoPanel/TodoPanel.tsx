@@ -9,14 +9,12 @@ import {
   Inbox,
   Plus,
   RefreshCw,
-  Save,
   Trash2,
   X,
 } from 'lucide-react';
 import type { Pagination, Todo, TodoState } from '../../../lib/api';
 import { api } from '../../../lib/api';
 import { RecurringTodoModal } from './RecurringTodoModal';
-import { TodoInlineForm } from './TodoInlineForm';
 
 const PER_PAGE = 15;
 const MAX_NOTE_PREVIEW_CHARS = 60;
@@ -56,9 +54,10 @@ export function TodoPanel() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
 
-  // Inline editing state
-  const [isAddingTodo, setIsAddingTodo] = useState(false);
-  const [editingTodoId, setEditingTodoId] = useState<number | null>(null);
+  // Inline title editing state
+  const [editingTitleId, setEditingTitleId] = useState<number | null>(null);
+  const [savingTitle, setSavingTitle] = useState(false);
+  const titleRef = useRef<HTMLDivElement>(null);
 
   // Inline note editing state
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
@@ -93,30 +92,69 @@ export function TodoPanel() {
     loadTodos();
   }, [loadTodos]);
 
-  // Inline form functions
-  const startAddTodo = () => {
-    setIsAddingTodo(true);
-    setEditingTodoId(null);
+  // Add new todo
+  const handleAddTodo = async () => {
+    try {
+      const response = await api.todos.create({ title: 'New todo' });
+      await loadTodos();
+      // Start editing the title of the new todo
+      startEditTitle(response.todo);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create todo');
+    }
   };
 
-  const startEditTodo = (todoId: number) => {
-    setEditingTodoId(todoId);
-    setIsAddingTodo(false);
+  // Inline title editing functions
+  const startEditTitle = (todo: Todo) => {
+    setEditingTitleId(todo.id);
+    setEditingNoteId(null);
+    setTimeout(() => {
+      if (titleRef.current) {
+        titleRef.current.textContent = todo.title;
+        titleRef.current.focus();
+        // Select all text
+        const range = document.createRange();
+        range.selectNodeContents(titleRef.current);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    }, 0);
   };
 
-  const cancelForm = () => {
-    setIsAddingTodo(false);
-    setEditingTodoId(null);
+  const cancelTitleEdit = () => {
+    setEditingTitleId(null);
   };
 
-  const handleFormSave = () => {
-    cancelForm();
-    loadTodos();
+  const handleTitleSave = async (todoId: number) => {
+    const content = titleRef.current?.textContent?.trim() || '';
+    if (!content) {
+      // Delete todo if title is empty
+      try {
+        await api.todos.delete(todoId);
+        cancelTitleEdit();
+        loadTodos();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete todo');
+      }
+      return;
+    }
+    try {
+      setSavingTitle(true);
+      await api.todos.update(todoId, { title: content });
+      cancelTitleEdit();
+      loadTodos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save title');
+    } finally {
+      setSavingTitle(false);
+    }
   };
 
   // Inline note editing functions
   const startEditNote = (todo: Todo) => {
     setEditingNoteId(todo.id);
+    setEditingTitleId(null);
     // Set content after render
     setTimeout(() => {
       if (noteRef.current) {
@@ -236,17 +274,11 @@ export function TodoPanel() {
         </div>
       )}
 
-      {/* Add Todo Button or Form */}
-      {isAddingTodo ? (
-        <div className="mb-3">
-          <TodoInlineForm onSave={handleFormSave} onCancel={cancelForm} />
-        </div>
-      ) : (
-        <button className="btn btn-ghost btn-sm justify-start gap-2 mb-3" onClick={startAddTodo}>
-          <Plus className="h-4 w-4" />
-          Add Todo
-        </button>
-      )}
+      {/* Add Todo Button */}
+      <button className="btn btn-ghost btn-sm justify-start gap-2 mb-3" onClick={handleAddTodo}>
+        <Plus className="h-4 w-4" />
+        Add Todo
+      </button>
 
       {/* Todo List */}
       <div className="flex-1 overflow-y-auto space-y-2">
@@ -257,134 +289,122 @@ export function TodoPanel() {
         ) : todos.length === 0 ? (
           <div className="text-center text-base-content/50 py-8">{'No todos found'}</div>
         ) : (
-          todos.map((todo) =>
-            editingTodoId === todo.id ? (
-              <TodoInlineForm
-                key={todo.id}
-                todo={todo}
-                onSave={handleFormSave}
-                onCancel={cancelForm}
-              />
-            ) : (
-              <div
-                key={todo.id}
-                className={`card card-compact bg-base-300 cursor-pointer hover:bg-base-300/80 ${todo.state === 'completed' ? 'opacity-60' : ''}`}
-                onClick={() => startEditTodo(todo.id)}
-              >
-                <div className="card-body">
-                  <div className="flex items-start gap-2">
-                    <div className="dropdown dropdown-hover" onClick={(e) => e.stopPropagation()}>
-                      <div tabIndex={0} role="button" className="btn btn-ghost btn-xs btn-circle">
-                        {STATE_ICONS[todo.state]}
-                      </div>
-                      <ul
-                        tabIndex={0}
-                        className="dropdown-content menu bg-base-200 rounded-box z-10 w-32 p-1 shadow"
-                      >
-                        {(['pending', 'in_progress', 'completed', 'cancelled'] as TodoState[]).map(
-                          (state) => (
-                            <li key={state}>
-                              <button
-                                onClick={() => handleStateChange(todo.id, state)}
-                                className={todo.state === state ? 'active' : ''}
-                              >
-                                {STATE_ICONS[state]}
-                                <span className="text-xs">{STATE_LABELS[state]}</span>
-                              </button>
-                            </li>
-                          )
-                        )}
-                      </ul>
+          todos.map((todo) => (
+            <div
+              key={todo.id}
+              className={`card card-compact bg-base-300 ${todo.state === 'completed' ? 'opacity-60' : ''}`}
+            >
+              <div className="card-body">
+                <div className="flex items-start gap-2">
+                  <div className="dropdown dropdown-hover">
+                    <div tabIndex={0} role="button" className="btn btn-ghost btn-xs btn-circle">
+                      {STATE_ICONS[todo.state]}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <ul
+                      tabIndex={0}
+                      className="dropdown-content menu bg-base-200 rounded-box z-10 w-32 p-1 shadow"
+                    >
+                      {(['pending', 'in_progress', 'completed', 'cancelled'] as TodoState[]).map(
+                        (state) => (
+                          <li key={state}>
+                            <button
+                              onClick={() => handleStateChange(todo.id, state)}
+                              className={todo.state === state ? 'active' : ''}
+                            >
+                              {STATE_ICONS[state]}
+                              <span className="text-xs">{STATE_LABELS[state]}</span>
+                            </button>
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {editingTitleId === todo.id ? (
+                      <div
+                        ref={titleRef}
+                        contentEditable
+                        className={`font-medium text-sm outline-none border-b border-primary ${todo.state === 'completed' ? 'line-through' : ''}`}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            cancelTitleEdit();
+                          } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleTitleSave(todo.id);
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            if (editingTitleId === todo.id && !savingTitle) {
+                              handleTitleSave(todo.id);
+                            }
+                          }, 150);
+                        }}
+                      />
+                    ) : (
                       <p
-                        className={`font-medium text-sm ${todo.state === 'completed' ? 'line-through' : ''}`}
+                        className={`font-medium text-sm cursor-pointer hover:text-primary ${todo.state === 'completed' ? 'line-through' : ''}`}
+                        onClick={() => startEditTitle(todo)}
                       >
                         {todo.title}
                       </p>
-                      {editingNoteId === todo.id ? (
-                        <div className="mt-1" onClick={(e) => e.stopPropagation()}>
-                          <div
-                            ref={noteRef}
-                            contentEditable
-                            className="text-xs text-base-content/80 outline-none border-b border-primary min-h-[1.25rem] whitespace-pre-wrap"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Escape') {
-                                cancelNoteEdit();
-                              } else if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
+                    )}
+                    {editingNoteId === todo.id ? (
+                      <div className="mt-1">
+                        <div
+                          ref={noteRef}
+                          contentEditable
+                          className="text-xs text-base-content/80 outline-none border-b border-primary min-h-[1.25rem] whitespace-pre-wrap"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                              cancelNoteEdit();
+                            } else if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleNoteSave(todo.id);
+                            }
+                          }}
+                          onBlur={() => {
+                            setTimeout(() => {
+                              if (editingNoteId === todo.id && !savingNote) {
                                 handleNoteSave(todo.id);
                               }
-                            }}
-                            onBlur={() => {
-                              // Small delay to allow button clicks to register
-                              setTimeout(() => {
-                                if (editingNoteId === todo.id) {
-                                  handleNoteSave(todo.id);
-                                }
-                              }, 150);
-                            }}
-                          />
-                          <div className="flex justify-end gap-1 mt-1">
-                            <button
-                              className="btn btn-ghost btn-xs"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={cancelNoteEdit}
-                              disabled={savingNote}
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                            <button
-                              className="btn btn-primary btn-xs"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => handleNoteSave(todo.id)}
-                              disabled={savingNote}
-                            >
-                              {savingNote ? (
-                                <span className="loading loading-spinner loading-xs"></span>
-                              ) : (
-                                <Save className="h-3 w-3" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          className="text-xs text-base-content/60 mt-1 text-left hover:text-base-content cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEditNote(todo);
+                            }, 150);
                           }}
-                        >
-                          {todo.note ? getNotePreview(todo.note) : '+ Add note'}
-                        </button>
-                      )}
-                      {todo.due_time && (
-                        <p className="text-xs text-base-content/50 mt-1 flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDueTime(todo.due_time, todo.is_whole_day)}
-                        </p>
-                      )}
-                      {todo.recurring_todo_id && (
-                        <p className="text-xs text-info mt-1 flex items-center gap-1">
-                          <RefreshCw className="h-3 w-3" />
-                          Recurring
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                        />
+                      </div>
+                    ) : (
                       <button
-                        className="btn btn-ghost btn-xs btn-circle text-error"
-                        onClick={() => handleDelete(todo.id)}
+                        className="text-xs text-base-content/60 mt-1 text-left hover:text-base-content cursor-pointer"
+                        onClick={() => startEditNote(todo)}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        {todo.note ? getNotePreview(todo.note) : '+ Add note'}
                       </button>
-                    </div>
+                    )}
+                    {todo.due_time && (
+                      <p className="text-xs text-base-content/50 mt-1 flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDueTime(todo.due_time, todo.is_whole_day)}
+                      </p>
+                    )}
+                    {todo.recurring_todo_id && (
+                      <p className="text-xs text-info mt-1 flex items-center gap-1">
+                        <RefreshCw className="h-3 w-3" />
+                        Recurring
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      className="btn btn-ghost btn-xs btn-circle text-error"
+                      onClick={() => handleDelete(todo.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
                   </div>
                 </div>
               </div>
-            )
-          )
+            </div>
+          ))
         )}
       </div>
 

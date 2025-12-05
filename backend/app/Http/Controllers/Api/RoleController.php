@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use Illuminate\Http\JsonResponse;
@@ -11,6 +12,23 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Roles', description: 'Role management endpoints')]
 class RoleController extends Controller
 {
+    #[OA\Get(
+        path: '/roles/permissions',
+        summary: 'Get all available permissions',
+        security: [['bearerAuth' => []]],
+        tags: ['Roles'],
+        responses: [
+            new OA\Response(response: 200, description: 'List of available permissions'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
+    public function permissions(): JsonResponse
+    {
+        return response()->json([
+            'permissions' => Permission::allWithDescriptions(),
+        ]);
+    }
+
     #[OA\Get(
         path: '/roles',
         summary: 'Get all roles with pagination',

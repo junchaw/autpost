@@ -85,4 +85,13 @@ export const recurringTodosApi = {
     fetchApi<{ message: string; recurring_todo: RecurringTodo }>(`/recurring-todos/${id}/resume`, {
       method: 'POST',
     }),
+
+  generate: (timeAhead: string = '1h') =>
+    fetchApi<{ message: string; time_ahead: string; generated_count: number }>(
+      '/recurring-todos/generate',
+      {
+        method: 'POST',
+        body: JSON.stringify({ time_ahead: timeAhead }),
+      }
+    ),
 };

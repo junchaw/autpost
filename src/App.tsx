@@ -12,6 +12,9 @@ import { useAuth } from './contexts/useAuth';
 import { AccessLogPage } from './pages/AccessLogPage';
 import { AdminPage } from './pages/AdminPage';
 import { ApiDocsPage } from './pages/ApiDocsPage';
+import { DevToolsPage } from './pages/DevToolsPage';
+import { GenericDefinitionsPage } from './pages/GenericDefinitionsPage';
+import { GenericResourcesPage } from './pages/GenericResourcesPage';
 import { RolesPage } from './pages/RolesPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -112,6 +115,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <RolesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/definitions"
+        element={
+          <ProtectedRoute>
+            <GenericDefinitionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/resources/:type"
+        element={
+          <ProtectedRoute>
+            <GenericResourcesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/dev-tools"
+        element={
+          <ProtectedRoute>
+            <DevToolsPage />
           </ProtectedRoute>
         }
       />

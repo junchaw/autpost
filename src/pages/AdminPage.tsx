@@ -1,4 +1,12 @@
-import { ArrowLeft, BookOpen, FileText, LayoutDashboard, Shield } from 'lucide-react';
+import {
+  ArrowLeft,
+  BookOpen,
+  Database,
+  FileText,
+  LayoutDashboard,
+  Shield,
+  Wrench,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface AdminLinkProps {
@@ -61,6 +69,20 @@ export function AdminPage() {
             icon={<Shield className="w-6 h-6" />}
             title="Roles & Permissions"
             description="Manage roles and role bindings"
+          />
+
+          <AdminLink
+            to="/admin/definitions"
+            icon={<Database className="w-6 h-6" />}
+            title="Generic Schema Definitions"
+            description="Manage generic resource schemas"
+          />
+
+          <AdminLink
+            to="/admin/dev-tools"
+            icon={<Wrench className="w-6 h-6" />}
+            title="Dev Tools"
+            description="Developer tools and utilities"
           />
 
           <AdminLink

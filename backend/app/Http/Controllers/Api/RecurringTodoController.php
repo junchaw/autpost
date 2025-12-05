@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\RecurringTodo;
+use App\Services\RecurringTodoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -309,6 +310,43 @@ class RecurringTodoController extends Controller
         return response()->json([
             'message' => 'Recurring todo resumed',
             'recurring_todo' => $recurringTodo,
+        ]);
+    }
+
+    #[OA\Post(
+        path: '/recurring-todos/generate',
+        summary: 'Trigger generation of todos from recurring todos',
+        description: 'Requires generate_recurring_todos permission',
+        security: [['bearerAuth' => []]],
+        tags: ['RecurringTodos'],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'time_ahead', type: 'string', example: '1h', description: 'Time ahead to generate todos for (e.g., 1h, 1d)'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Todos generated successfully'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Permission denied'),
+        ]
+    )]
+    public function generate(Request $request, RecurringTodoService $service): JsonResponse
+    {
+        $validated = $request->validate([
+            'time_ahead' => 'nullable|string|regex:/^\d+[hdwmy]$/',
+        ]);
+
+        $timeAhead = $validated['time_ahead'] ?? '1h';
+
+        $generatedCount = $service->generate($timeAhead);
+
+        return response()->json([
+            'message' => "Generated {$generatedCount} todo".($generatedCount === 1 ? '' : 's'),
+            'time_ahead' => $timeAhead,
+            'generated_count' => $generatedCount,
         ]);
     }
 }

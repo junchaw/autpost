@@ -3,6 +3,7 @@ import { accessLogsApi } from './access-logs';
 import { authApi } from './auth';
 import { healthApi } from './client';
 import { configApi } from './config';
+import { definitionsApi, resourcesApi } from './generic';
 import { notesApi } from './notes';
 import { recurringTodosApi } from './recurring-todos';
 import { roleBindingsApi, rolesApi, usersApi } from './roles';
@@ -74,6 +75,7 @@ export {
   usersApi,
   type CreateRoleBindingInput,
   type CreateRoleInput,
+  type PermissionOption,
   type Role,
   type RoleBinding,
   type RoleBindingListParams,
@@ -83,6 +85,22 @@ export {
   type UserSummary,
 } from './roles';
 export type { Pagination } from './types';
+export {
+  definitionsApi,
+  resourcesApi,
+  type CreateDefinitionInput,
+  type CreateResourceInput,
+  type DefinitionListParams,
+  type FieldSchema,
+  type FieldType,
+  type FieldTypeOption,
+  type GenericDefinition,
+  type GenericResource,
+  type GenericResourceData,
+  type ResourceListParams,
+  type UpdateDefinitionInput,
+  type UpdateResourceInput,
+} from './generic';
 
 // Backward compatible api object
 export const api = {
@@ -97,4 +115,6 @@ export const api = {
   roles: rolesApi,
   roleBindings: roleBindingsApi,
   users: usersApi,
+  definitions: definitionsApi,
+  resources: resourcesApi,
 };

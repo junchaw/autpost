@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
 
@@ -12,17 +13,17 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create admin role with hard_delete permission
-        Role::firstOrCreate(
+        // Create admin role with all permissions
+        Role::updateOrCreate(
             ['name' => 'admin'],
             [
                 'description' => 'Administrator with full permissions',
-                'permissions' => ['hard_delete'],
+                'permissions' => Permission::all(),
             ]
         );
 
         // Create basic user role
-        Role::firstOrCreate(
+        Role::updateOrCreate(
             ['name' => 'user'],
             [
                 'description' => 'Regular user',
