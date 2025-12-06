@@ -1,7 +1,7 @@
 import { UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ApiValidationError, authApi, setAuthToken } from '../lib/api';
+import { ApiValidationError, authApi, setAuthToken } from '@/lib/api';
 
 type Step = 'form' | 'verify';
 

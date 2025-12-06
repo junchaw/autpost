@@ -1,7 +1,7 @@
 import { KeyRound } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ApiValidationError, authApi } from '../lib/api';
+import { ApiValidationError, authApi } from '@/lib/api';
 
 type Step = 'email' | 'verify' | 'reset' | 'success';
 

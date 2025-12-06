@@ -1,4 +1,4 @@
 export { TodoPanel } from './TodoPanel';
 export { TodoInlineForm } from './TodoInlineForm';
-export { NoteModal } from './NoteModal';
+export { NoteModal } from '../NotePanel/NoteModal';
 export { RecurringTodoModal } from './RecurringTodoModal';

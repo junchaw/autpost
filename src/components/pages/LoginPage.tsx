@@ -1,8 +1,8 @@
 import { LogIn } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/useAuth';
-import { ApiValidationError } from '../lib/api';
+import { useAuth } from '@/contexts/useAuth';
+import { ApiValidationError } from '@/lib/api';
 
 export function LoginPage() {
   const { login } = useAuth();

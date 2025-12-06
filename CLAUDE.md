@@ -170,13 +170,15 @@ Then visit http://localhost:5173 to see the frontend, which will communicate wit
 For comprehensive documentation, commands, and package references:
 
 - **[docs/INDEX.md](docs/INDEX.md)** - Main documentation hub with quick links, commands, and technology references
-- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development guidelines, API patterns, and conventions
+- **[docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md)** - Development guidelines, API patterns, and conventions
 - **[docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)** - Complete list of all PHP and JavaScript dependencies with links
 
 ## Important: Read Before Making Changes
 
-**Before adding new features or modifying existing code, read [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** to understand:
+**Before adding new features or modifying existing code, read [docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md)** to understand:
 
+- **Import aliases** - Always use `@/` alias instead of relative paths (e.g., `@/lib/api` not `../../lib/api`)
+- **Frontend project structure** - Where to place components, pages, and utilities
 - Soft delete implementation patterns
 - Standard CRUD API structure (list, create, get, update, delete, restore, hard delete)
 - Pagination response format

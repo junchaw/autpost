@@ -12,7 +12,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { api, type AccessLog, type Pagination } from '../lib/api';
+import { api, type AccessLog, type Pagination } from '@/lib/api';
 
 interface AccessLogModalProps {
   isOpen: boolean;

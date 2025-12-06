@@ -15,7 +15,6 @@ export interface FormErrors {
 }
 
 export const INTERVAL_UNIT_LABELS: Record<IntervalUnit, string> = {
-  second: 'Second(s)',
   minute: 'Minute(s)',
   hour: 'Hour(s)',
   day: 'Day(s)',

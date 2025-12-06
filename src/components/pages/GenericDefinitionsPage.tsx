@@ -2,15 +2,15 @@ import { ArrowLeft, ChevronDown, Database, Eye, Plus, Trash2, X } from 'lucide-r
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { FormInput, FormTextarea } from '../components/ui/FormField';
-import { Pagination } from '../components/ui/Pagination';
+import { FormInput, FormTextarea } from '@/components/ui/FormField';
+import { Pagination } from '@/components/ui/Pagination';
 import {
   api,
   type FieldSchema,
   type FieldTypeOption,
   type GenericDefinition,
   type Pagination as PaginationType,
-} from '../lib/api';
+} from '@/lib/api';
 
 interface FieldEditorProps {
   fields: Record<string, FieldSchema>;

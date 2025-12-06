@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Banner } from './Banner';
+import { Banner } from '../layout/Banner';
 
 export function IndexPage() {
   return (

@@ -101,7 +101,7 @@ class RecurringTodoController extends Controller
                     new OA\Property(property: 'title', type: 'string', maxLength: 255),
                     new OA\Property(property: 'note', type: 'string', nullable: true),
                     new OA\Property(property: 'interval', type: 'integer', minimum: 1),
-                    new OA\Property(property: 'interval_unit', type: 'string', enum: ['day', 'week', 'month', 'year']),
+                    new OA\Property(property: 'interval_unit', type: 'string', enum: ['minute', 'hour', 'day', 'week', 'month', 'year']),
                     new OA\Property(property: 'start_time', type: 'string', format: 'date-time'),
                     new OA\Property(property: 'end_time', type: 'string', format: 'date-time', nullable: true),
                     new OA\Property(property: 'state', type: 'string', enum: ['active', 'paused'], nullable: true),
@@ -120,7 +120,7 @@ class RecurringTodoController extends Controller
             'title' => 'required|string|max:255',
             'note' => 'nullable|string',
             'interval' => 'required|integer|min:1',
-            'interval_unit' => 'required|in:day,week,month,year',
+            'interval_unit' => 'required|in:minute,hour,day,week,month,year',
             'start_time' => 'required|date',
             'end_time' => 'nullable|date|after_or_equal:start_time',
             'state' => 'nullable|in:active,paused',
@@ -150,7 +150,7 @@ class RecurringTodoController extends Controller
                     new OA\Property(property: 'title', type: 'string', maxLength: 255),
                     new OA\Property(property: 'note', type: 'string', nullable: true),
                     new OA\Property(property: 'interval', type: 'integer', minimum: 1),
-                    new OA\Property(property: 'interval_unit', type: 'string', enum: ['day', 'week', 'month', 'year']),
+                    new OA\Property(property: 'interval_unit', type: 'string', enum: ['minute', 'hour', 'day', 'week', 'month', 'year']),
                     new OA\Property(property: 'start_time', type: 'string', format: 'date-time'),
                     new OA\Property(property: 'end_time', type: 'string', format: 'date-time', nullable: true),
                     new OA\Property(property: 'state', type: 'string', enum: ['active', 'paused'], nullable: true),
@@ -172,7 +172,7 @@ class RecurringTodoController extends Controller
             'title' => 'sometimes|string|max:255',
             'note' => 'nullable|string',
             'interval' => 'sometimes|integer|min:1',
-            'interval_unit' => 'sometimes|in:day,week,month,year',
+            'interval_unit' => 'sometimes|in:minute,hour,day,week,month,year',
             'start_time' => 'sometimes|date',
             'end_time' => 'nullable|date|after_or_equal:start_time',
             'state' => 'nullable|in:active,paused',
@@ -344,7 +344,7 @@ class RecurringTodoController extends Controller
         $generatedCount = $service->generate($timeAhead);
 
         return response()->json([
-            'message' => "Generated {$generatedCount} todo".($generatedCount === 1 ? '' : 's'),
+            'message' => "Generated {$generatedCount} todo" . ($generatedCount === 1 ? '' : 's'),
             'time_ahead' => $timeAhead,
             'generated_count' => $generatedCount,
         ]);

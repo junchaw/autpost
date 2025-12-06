@@ -21,7 +21,7 @@ import {
   type Role,
   type RoleBinding,
   type UserSummary,
-} from '../lib/api';
+} from '@/lib/api';
 
 interface RoleModalProps {
   isOpen: boolean;

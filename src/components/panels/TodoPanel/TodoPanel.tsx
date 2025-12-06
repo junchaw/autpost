@@ -1,47 +1,11 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import {
-  Calendar,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Circle,
-  Clock,
-  Inbox,
-  Plus,
-  RefreshCw,
-  Trash2,
-  X,
-} from 'lucide-react';
-import type { Pagination, Todo, TodoState } from '../../../lib/api';
-import { api } from '../../../lib/api';
+import { useEffect, useState, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, Inbox, Plus, RefreshCw } from 'lucide-react';
+import type { Pagination, Todo, TodoState } from '@/lib/api';
+import { api } from '@/lib/api';
 import { RecurringTodoModal } from './RecurringTodoModal';
+import { TodoItem, STATE_ICONS, STATE_LABELS } from './TodoItem';
 
 const PER_PAGE = 15;
-const MAX_NOTE_PREVIEW_CHARS = 60;
-
-function getNotePreview(note: string): string {
-  const firstLine = note.split('\n')[0];
-  if (firstLine.length <= MAX_NOTE_PREVIEW_CHARS) {
-    return firstLine;
-  }
-  const truncated = firstLine.slice(0, MAX_NOTE_PREVIEW_CHARS);
-  const lastSpace = truncated.lastIndexOf(' ');
-  return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + '...';
-}
-
-const STATE_ICONS: Record<TodoState, React.ReactNode> = {
-  pending: <Circle className="h-4 w-4" />,
-  in_progress: <Clock className="h-4 w-4 text-warning" />,
-  completed: <Check className="h-4 w-4 text-success" />,
-  cancelled: <X className="h-4 w-4 text-error" />,
-};
-
-const STATE_LABELS: Record<TodoState, string> = {
-  pending: 'Pending',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-};
 
 type FilterType = TodoState | 'inbox';
 
@@ -54,15 +18,11 @@ export function TodoPanel() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
 
-  // Inline title editing state
+  // Inline editing state
   const [editingTitleId, setEditingTitleId] = useState<number | null>(null);
-  const [savingTitle, setSavingTitle] = useState(false);
-  const titleRef = useRef<HTMLDivElement>(null);
-
-  // Inline note editing state
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
+  const [savingTitle, setSavingTitle] = useState(false);
   const [savingNote, setSavingNote] = useState(false);
-  const noteRef = useRef<HTMLDivElement>(null);
 
   const loadTodos = useCallback(async () => {
     try {
@@ -97,42 +57,17 @@ export function TodoPanel() {
     try {
       const response = await api.todos.create({ title: 'New todo' });
       await loadTodos();
-      // Start editing the title of the new todo
-      startEditTitle(response.todo);
+      setEditingTitleId(response.todo.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create todo');
     }
   };
 
-  // Inline title editing functions
-  const startEditTitle = (todo: Todo) => {
-    setEditingTitleId(todo.id);
-    setEditingNoteId(null);
-    setTimeout(() => {
-      if (titleRef.current) {
-        titleRef.current.textContent = todo.title;
-        titleRef.current.focus();
-        // Select all text
-        const range = document.createRange();
-        range.selectNodeContents(titleRef.current);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-      }
-    }, 0);
-  };
-
-  const cancelTitleEdit = () => {
-    setEditingTitleId(null);
-  };
-
-  const handleTitleSave = async (todoId: number) => {
-    const content = titleRef.current?.textContent?.trim() || '';
+  const handleTitleSave = async (todoId: number, content: string) => {
     if (!content) {
-      // Delete todo if title is empty
       try {
         await api.todos.delete(todoId);
-        cancelTitleEdit();
+        setEditingTitleId(null);
         loadTodos();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to delete todo');
@@ -142,7 +77,7 @@ export function TodoPanel() {
     try {
       setSavingTitle(true);
       await api.todos.update(todoId, { title: content });
-      cancelTitleEdit();
+      setEditingTitleId(null);
       loadTodos();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save title');
@@ -151,36 +86,11 @@ export function TodoPanel() {
     }
   };
 
-  // Inline note editing functions
-  const startEditNote = (todo: Todo) => {
-    setEditingNoteId(todo.id);
-    setEditingTitleId(null);
-    // Set content after render
-    setTimeout(() => {
-      if (noteRef.current) {
-        noteRef.current.textContent = todo.note || '';
-        noteRef.current.focus();
-        // Move cursor to end
-        const range = document.createRange();
-        range.selectNodeContents(noteRef.current);
-        range.collapse(false);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-      }
-    }, 0);
-  };
-
-  const cancelNoteEdit = () => {
-    setEditingNoteId(null);
-  };
-
-  const handleNoteSave = async (todoId: number) => {
-    const content = noteRef.current?.textContent?.trim() || null;
+  const handleNoteSave = async (todoId: number, content: string | null) => {
     try {
       setSavingNote(true);
       await api.todos.update(todoId, { note: content });
-      cancelNoteEdit();
+      setEditingNoteId(null);
       loadTodos();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save note');
@@ -205,23 +115,6 @@ export function TodoPanel() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete todo');
     }
-  };
-
-  const formatDueTime = (dueTime: string | null, isWholeDay: boolean) => {
-    if (!dueTime) return null;
-    const date = new Date(dueTime);
-    if (isWholeDay) {
-      return date.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-      });
-    }
-    return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   const handlePageChange = (page: number) => {
@@ -290,120 +183,28 @@ export function TodoPanel() {
           <div className="text-center text-base-content/50 py-8">{'No todos found'}</div>
         ) : (
           todos.map((todo) => (
-            <div
+            <TodoItem
               key={todo.id}
-              className={`card card-compact bg-base-300 ${todo.state === 'completed' ? 'opacity-60' : ''}`}
-            >
-              <div className="card-body">
-                <div className="flex items-start gap-2">
-                  <div className="dropdown dropdown-hover">
-                    <div tabIndex={0} role="button" className="btn btn-ghost btn-xs btn-circle">
-                      {STATE_ICONS[todo.state]}
-                    </div>
-                    <ul
-                      tabIndex={0}
-                      className="dropdown-content menu bg-base-200 rounded-box z-10 w-32 p-1 shadow"
-                    >
-                      {(['pending', 'in_progress', 'completed', 'cancelled'] as TodoState[]).map(
-                        (state) => (
-                          <li key={state}>
-                            <button
-                              onClick={() => handleStateChange(todo.id, state)}
-                              className={todo.state === state ? 'active' : ''}
-                            >
-                              {STATE_ICONS[state]}
-                              <span className="text-xs">{STATE_LABELS[state]}</span>
-                            </button>
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    {editingTitleId === todo.id ? (
-                      <div
-                        ref={titleRef}
-                        contentEditable
-                        className={`font-medium text-sm outline-none border-b border-primary ${todo.state === 'completed' ? 'line-through' : ''}`}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape') {
-                            cancelTitleEdit();
-                          } else if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleTitleSave(todo.id);
-                          }
-                        }}
-                        onBlur={() => {
-                          setTimeout(() => {
-                            if (editingTitleId === todo.id && !savingTitle) {
-                              handleTitleSave(todo.id);
-                            }
-                          }, 150);
-                        }}
-                      />
-                    ) : (
-                      <p
-                        className={`font-medium text-sm cursor-pointer hover:text-primary ${todo.state === 'completed' ? 'line-through' : ''}`}
-                        onClick={() => startEditTitle(todo)}
-                      >
-                        {todo.title}
-                      </p>
-                    )}
-                    {editingNoteId === todo.id ? (
-                      <div className="mt-1">
-                        <div
-                          ref={noteRef}
-                          contentEditable
-                          className="text-xs text-base-content/80 outline-none border-b border-primary min-h-[1.25rem] whitespace-pre-wrap"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Escape') {
-                              cancelNoteEdit();
-                            } else if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleNoteSave(todo.id);
-                            }
-                          }}
-                          onBlur={() => {
-                            setTimeout(() => {
-                              if (editingNoteId === todo.id && !savingNote) {
-                                handleNoteSave(todo.id);
-                              }
-                            }, 150);
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <button
-                        className="text-xs text-base-content/60 mt-1 text-left hover:text-base-content cursor-pointer"
-                        onClick={() => startEditNote(todo)}
-                      >
-                        {todo.note ? getNotePreview(todo.note) : '+ Add note'}
-                      </button>
-                    )}
-                    {todo.due_time && (
-                      <p className="text-xs text-base-content/50 mt-1 flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDueTime(todo.due_time, todo.is_whole_day)}
-                      </p>
-                    )}
-                    {todo.recurring_todo_id && (
-                      <p className="text-xs text-info mt-1 flex items-center gap-1">
-                        <RefreshCw className="h-3 w-3" />
-                        Recurring
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      className="btn btn-ghost btn-xs btn-circle text-error"
-                      onClick={() => handleDelete(todo.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+              todo={todo}
+              isEditingTitle={editingTitleId === todo.id}
+              isEditingNote={editingNoteId === todo.id}
+              onStartEditTitle={() => {
+                setEditingTitleId(todo.id);
+                setEditingNoteId(null);
+              }}
+              onStartEditNote={() => {
+                setEditingNoteId(todo.id);
+                setEditingTitleId(null);
+              }}
+              onSaveTitle={(content) => handleTitleSave(todo.id, content)}
+              onSaveNote={(content) => handleNoteSave(todo.id, content)}
+              onCancelTitleEdit={() => setEditingTitleId(null)}
+              onCancelNoteEdit={() => setEditingNoteId(null)}
+              onStateChange={(state) => handleStateChange(todo.id, state)}
+              onDelete={() => handleDelete(todo.id)}
+              savingTitle={savingTitle}
+              savingNote={savingNote}
+            />
           ))
         )}
       </div>
@@ -413,23 +214,27 @@ export function TodoPanel() {
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-base-300">
           <span className="text-xs text-base-content/50">{pagination.total} items</span>
           <div className="flex items-center gap-1">
-            <button
-              className="btn btn-ghost btn-xs btn-circle"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
+            <div className="tooltip" data-tip="Previous page">
+              <button
+                className="btn btn-ghost btn-xs btn-circle"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            </div>
             <span className="text-xs px-2">
               {currentPage} / {Math.max(1, Math.ceil(pagination.total / pagination.per_page))}
             </span>
-            <button
-              className="btn btn-ghost btn-xs btn-circle"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage >= Math.ceil(pagination.total / pagination.per_page)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+            <div className="tooltip" data-tip="Next page">
+              <button
+                className="btn btn-ghost btn-xs btn-circle"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= Math.ceil(pagination.total / pagination.per_page)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}

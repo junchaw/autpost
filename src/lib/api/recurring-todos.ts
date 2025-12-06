@@ -2,7 +2,7 @@ import { fetchApi } from './client';
 import type { Pagination } from './types';
 
 export type RecurringTodoState = 'active' | 'paused';
-export type IntervalUnit = 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year';
+export type IntervalUnit = 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year';
 
 export interface RecurringTodo {
   id: number;

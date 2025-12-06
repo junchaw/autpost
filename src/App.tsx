@@ -1,21 +1,21 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import './App.scss';
-import { Dashboard } from './components/Dashboard';
-import { IndexPage } from './components/IndexPage';
-import { LoginPage } from './components/LoginPage';
-import { ProfilePage } from './components/ProfilePage';
-import { RegisterPage } from './components/RegisterPage';
-import { ResetPasswordPage } from './components/ResetPasswordPage';
+import { DashboardPage } from './components/pages/dashboard/DashboardPage';
+import { IndexPage } from './components/pages/IndexPage';
+import { LoginPage } from './components/pages/LoginPage';
+import { ProfilePage } from './components/pages/ProfilePage';
+import { RegisterPage } from './components/pages/RegisterPage';
+import { ResetPasswordPage } from './components/pages/ResetPasswordPage';
 import { Toaster } from './components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './contexts/useAuth';
-import { AccessLogPage } from './pages/AccessLogPage';
-import { AdminPage } from './pages/AdminPage';
-import { ApiDocsPage } from './pages/ApiDocsPage';
-import { DevToolsPage } from './pages/DevToolsPage';
-import { GenericDefinitionsPage } from './pages/GenericDefinitionsPage';
-import { GenericResourcesPage } from './pages/GenericResourcesPage';
-import { RolesPage } from './pages/RolesPage';
+import { AccessLogPage } from './components/pages/AccessLogPage';
+import { AdminPage } from './components/pages/AdminPage';
+import { ApiDocsPage } from './components/pages/ApiDocsPage';
+import { DevToolsPage } from './components/pages/DevToolsPage';
+import { GenericDefinitionsPage } from './components/pages/GenericDefinitionsPage';
+import { GenericResourcesPage } from './components/pages/GenericResourcesPage';
+import { RolesPage } from './components/pages/RolesPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -148,7 +148,7 @@ function AppRoutes() {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <DashboardPage />
           </ProtectedRoute>
         }
       />

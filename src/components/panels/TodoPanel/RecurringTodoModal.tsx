@@ -1,13 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Edit2, Trash2, Pause, Play, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { api } from '../../../lib/api';
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Pause,
+  Play,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+} from 'lucide-react';
+import { api } from '@/lib/api';
 import type {
   RecurringTodo,
   IntervalUnit,
   CreateRecurringTodoInput,
   UpdateRecurringTodoInput,
   Pagination,
-} from '../../../lib/api';
+} from '@/lib/api';
 import { RecurringTodoForm } from './RecurringTodoForm';
 import {
   type RecurringTodoFormData,
@@ -46,6 +56,7 @@ export function RecurringTodoModal({ isOpen, onClose, onTodosGenerated }: Recurr
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<RecurringTodoFormData>(getDefaultFormData());
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null);
 
   const loadRecurringTodos = useCallback(async () => {
     try {
@@ -162,14 +173,45 @@ export function RecurringTodoModal({ isOpen, onClose, onTodosGenerated }: Recurr
     }
   };
 
+  const handleDeleteClick = (id: number) => {
+    if (confirmingDeleteId === id) {
+      // Second click - actually delete
+      handleDelete(id);
+    } else {
+      // First click - show confirmation
+      setConfirmingDeleteId(id);
+    }
+  };
+
   const handleDelete = async (id: number) => {
     try {
       await api.recurringTodos.delete(id);
+      setConfirmingDeleteId(null);
       loadRecurringTodos();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete recurring todo');
+      setConfirmingDeleteId(null);
     }
   };
+
+  // Cancel delete confirmation when clicking elsewhere
+  useEffect(() => {
+    if (confirmingDeleteId === null) return;
+
+    const handleClickOutside = () => {
+      setConfirmingDeleteId(null);
+    };
+
+    // Delay adding listener to avoid immediate trigger
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [confirmingDeleteId]);
 
   const handlePause = async (id: number) => {
     try {
@@ -219,9 +261,11 @@ export function RecurringTodoModal({ isOpen, onClose, onTodosGenerated }: Recurr
       <div className="modal-box max-w-2xl max-h-[80vh]">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-lg">Recurring Todos</h3>
-          <button className="btn btn-ghost btn-sm btn-circle" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </button>
+          <div className="tooltip tooltip-left" data-tip="Close">
+            <button className="btn btn-ghost btn-sm btn-circle" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -307,36 +351,50 @@ export function RecurringTodoModal({ isOpen, onClose, onTodosGenerated }: Recurr
                       </div>
                       <div className="flex gap-1">
                         {todo.state === 'active' ? (
-                          <button
-                            className="btn btn-ghost btn-xs btn-circle text-warning"
-                            onClick={() => handlePause(todo.id)}
-                            title="Pause"
-                          >
-                            <Pause className="h-3 w-3" />
-                          </button>
+                          <div className="tooltip" data-tip="Pause">
+                            <button
+                              className="btn btn-ghost btn-xs btn-circle text-warning"
+                              onClick={() => handlePause(todo.id)}
+                            >
+                              <Pause className="h-3 w-3" />
+                            </button>
+                          </div>
                         ) : (
-                          <button
-                            className="btn btn-ghost btn-xs btn-circle text-success"
-                            onClick={() => handleResume(todo.id)}
-                            title="Resume"
-                          >
-                            <Play className="h-3 w-3" />
-                          </button>
+                          <div className="tooltip" data-tip="Resume">
+                            <button
+                              className="btn btn-ghost btn-xs btn-circle text-success"
+                              onClick={() => handleResume(todo.id)}
+                            >
+                              <Play className="h-3 w-3" />
+                            </button>
+                          </div>
                         )}
-                        <button
-                          className="btn btn-ghost btn-xs btn-circle"
-                          onClick={() => startEdit(todo)}
-                          title="Edit"
+                        <div className="tooltip" data-tip="Edit">
+                          <button
+                            className="btn btn-ghost btn-xs btn-circle"
+                            onClick={() => startEdit(todo)}
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <div
+                          className="tooltip tooltip-left"
+                          data-tip={confirmingDeleteId === todo.id ? 'Click to confirm' : 'Delete'}
                         >
-                          <Edit2 className="h-3 w-3" />
-                        </button>
-                        <button
-                          className="btn btn-ghost btn-xs btn-circle text-error"
-                          onClick={() => handleDelete(todo.id)}
-                          title="Delete"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
+                          <button
+                            className={`btn btn-ghost btn-xs btn-circle ${confirmingDeleteId === todo.id ? 'text-success' : 'text-error'}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(todo.id);
+                            }}
+                          >
+                            {confirmingDeleteId === todo.id ? (
+                              <Check className="h-3 w-3" />
+                            ) : (
+                              <Trash2 className="h-3 w-3" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -1,10 +1,11 @@
-import { ArrowLeft, List, Play, RefreshCw } from 'lucide-react';
+import { ArrowLeft, CheckSquare, List, Play, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { RecurringTodoModal } from '../components/panels/TodoPanel/RecurringTodoModal';
-import { Select } from '../components/ui/Select';
-import { api } from '../lib/api';
+import { RecurringTodoModal } from '@/components/panels/TodoPanel/RecurringTodoModal';
+import { TodoListModal } from '@/components/panels/TodoPanel/TodoListModal';
+import { Select } from '@/components/ui/Select';
+import { api } from '@/lib/api';
 
 const TIME_AHEAD_OPTIONS = [
   { value: '1h', label: '1 hour' },
@@ -18,6 +19,7 @@ export function DevToolsPage() {
   const [generating, setGenerating] = useState(false);
   const [timeAhead, setTimeAhead] = useState('1h');
   const [showRecurringModal, setShowRecurringModal] = useState(false);
+  const [showTodoModal, setShowTodoModal] = useState(false);
 
   const handleGenerateRecurringTodos = async () => {
     setGenerating(true);
@@ -85,6 +87,11 @@ export function DevToolsPage() {
                 <List className="w-4 h-4" />
                 Recurring Todos
               </button>
+
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowTodoModal(true)}>
+                <CheckSquare className="w-4 h-4" />
+                Todo Items
+              </button>
             </div>
           </div>
         </div>
@@ -94,6 +101,8 @@ export function DevToolsPage() {
         isOpen={showRecurringModal}
         onClose={() => setShowRecurringModal(false)}
       />
+
+      <TodoListModal isOpen={showTodoModal} onClose={() => setShowTodoModal(false)} />
     </div>
   );
 }

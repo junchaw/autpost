@@ -2,7 +2,7 @@ import { ArrowLeft, Eye, FileText, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Pagination } from '../components/ui/Pagination';
+import { Pagination } from '@/components/ui/Pagination';
 import {
   api,
   type FieldSchema,
@@ -10,7 +10,7 @@ import {
   type GenericResource,
   type GenericResourceData,
   type Pagination as PaginationType,
-} from '../lib/api';
+} from '@/lib/api';
 
 interface DynamicFieldProps {
   fieldKey: string;

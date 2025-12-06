@@ -2,6 +2,62 @@
 
 This document outlines the development patterns and conventions used in this project.
 
+## Import Aliases
+
+**Always prefer import aliases over relative paths** for cleaner and more maintainable imports.
+
+### Available Aliases
+
+| Alias | Path     | Example                           |
+| ----- | -------- | --------------------------------- |
+| `@/`  | `./src/` | `import { api } from '@/lib/api'` |
+
+### Usage Examples
+
+```typescript
+// Good - use aliases
+import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/useAuth';
+import { Button } from '@/components/ui/Button';
+import { DashboardPage } from '@/components/pages/dashboard/DashboardPage';
+
+// Avoid - relative paths (especially deep ones)
+import { api } from '../../lib/api';
+import { useAuth } from '../../../contexts/useAuth';
+```
+
+### When to Use Relative Imports
+
+Use relative imports only for:
+
+- Files in the same directory: `import { utils } from './utils'`
+- Files in immediate subdirectory: `import { Child } from './components/Child'`
+
+### Configuration
+
+Aliases are configured in:
+
+- `vite.config.ts` - for Vite bundler
+- `tsconfig.app.json` - for TypeScript
+
+## Frontend Project Structure
+
+```
+src/
+├── components/
+│   ├── layout/          # Layout components (Banner, etc.)
+│   ├── pages/           # Page components
+│   │   ├── dashboard/   # Dashboard-specific components
+│   │   └── *.tsx        # Other page components
+│   ├── panels/          # Dashboard panels
+│   └── ui/              # Reusable UI components
+├── contexts/            # React contexts
+├── hooks/               # Custom hooks
+├── lib/                 # Utilities and API client
+│   └── api/             # API client modules
+└── App.tsx              # Main app component
+```
+
 ## Soft Delete
 
 All resources in this application implement **soft delete**. This means:
