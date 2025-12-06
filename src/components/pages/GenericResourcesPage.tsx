@@ -189,7 +189,9 @@ function ResourceModal({
 
   useEffect(() => {
     if (isOpen && resource && mode !== 'create') {
-      setFormData(resource.data || {});
+      // Extract data fields from resource (exclude system fields)
+      const { id: _id, _type, _updated_at, _created_at, ...resourceData } = resource;
+      setFormData(resourceData as GenericResourceData);
     } else if (mode === 'create') {
       setFormData({});
     }
@@ -221,7 +223,7 @@ function ResourceModal({
         await api.resources.create(definition.type, { data: formData });
         toast.success('Resource created');
       } else if (mode === 'edit' && resource) {
-        await api.resources.update(definition.type, resource._id, { data: formData });
+        await api.resources.update(definition.type, resource.id, { data: formData });
         toast.success('Resource updated');
       }
       onSave();
@@ -280,13 +282,13 @@ function ResourceModal({
             <div className="grid grid-cols-2 gap-4 pt-4 border-t">
               <div>
                 <span className="text-sm text-base-content/60">ID</span>
-                <p className="font-mono text-sm">{resource._id}</p>
+                <p className="font-mono text-sm">{resource.id}</p>
               </div>
-              {resource.created_at && (
+              {resource._updated_at && (
                 <div>
-                  <span className="text-sm text-base-content/60">Created</span>
+                  <span className="text-sm text-base-content/60">Updated</span>
                   <p className="font-mono text-sm">
-                    {new Date(resource.created_at).toLocaleString()}
+                    {new Date(resource._updated_at).toLocaleString()}
                   </p>
                 </div>
               )}
@@ -368,24 +370,24 @@ export function GenericResourcesPage() {
   };
 
   const getDisplayValue = (resource: GenericResource): string => {
-    if (!definition) return resource._id;
+    if (!definition) return resource.id;
     const fields = definition.fields || {};
 
     // Try to find a name/title field
     for (const key of ['name', 'title', 'label']) {
-      if (fields[key] && resource.data[key]) {
-        return String(resource.data[key]);
+      if (fields[key] && resource[key]) {
+        return String(resource[key]);
       }
     }
 
     // Return first string field value
     for (const [key, schema] of Object.entries(fields)) {
-      if (schema.type === 'string' && resource.data[key]) {
-        return String(resource.data[key]);
+      if (schema.type === 'string' && resource[key]) {
+        return String(resource[key]);
       }
     }
 
-    return resource._id;
+    return resource.id;
   };
 
   if (!type) {
@@ -456,8 +458,8 @@ export function GenericResourcesPage() {
                   </thead>
                   <tbody>
                     {resources.map((resource) => (
-                      <tr key={resource._id}>
-                        <td className="font-mono text-sm max-w-[100px] truncate">{resource._id}</td>
+                      <tr key={resource.id}>
+                        <td className="font-mono text-sm max-w-[100px] truncate">{resource.id}</td>
                         <td className="font-medium">{getDisplayValue(resource)}</td>
                         {definition &&
                           Object.entries(definition.fields || {})
@@ -465,35 +467,38 @@ export function GenericResourcesPage() {
                             .map(([key, schema]) => (
                               <td key={key} className="max-w-[150px] truncate">
                                 {schema.type === 'boolean'
-                                  ? resource.data[key]
+                                  ? resource[key]
                                     ? 'Yes'
                                     : 'No'
-                                  : String(resource.data[key] || '-')}
+                                  : String(resource[key] || '-')}
                               </td>
                             ))}
                         <td>
                           <div className="flex gap-1">
-                            <button
-                              className="btn btn-ghost btn-xs"
-                              onClick={() => openModal(resource, 'view')}
-                              title="View"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button
-                              className="btn btn-ghost btn-xs"
-                              onClick={() => openModal(resource, 'edit')}
-                              title="Edit"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              className="btn btn-ghost btn-xs text-error"
-                              onClick={() => setDeleteId(resource._id)}
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="tooltip" data-tip="View">
+                              <button
+                                className="btn btn-ghost btn-xs"
+                                onClick={() => openModal(resource, 'view')}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="tooltip" data-tip="Edit">
+                              <button
+                                className="btn btn-ghost btn-xs"
+                                onClick={() => openModal(resource, 'edit')}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="tooltip" data-tip="Delete">
+                              <button
+                                className="btn btn-ghost btn-xs text-error"
+                                onClick={() => setDeleteId(resource.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </td>
                       </tr>

@@ -44,7 +44,7 @@ export interface FieldSchema {
 }
 
 export interface GenericDefinition {
-  _id: string;
+  id: string;
   _type: 'definition';
   type: string;
   name: string;
@@ -84,11 +84,12 @@ export interface GenericResourceData {
 }
 
 export interface GenericResource {
-  _id: string;
+  id: string;
   _type: string;
-  data: GenericResourceData;
-  created_at?: string;
-  updated_at?: string;
+  _updated_at?: string;
+  _created_at?: string;
+  // All other fields from the definition are stored at root level
+  [key: string]: unknown;
 }
 
 export interface CreateResourceInput {

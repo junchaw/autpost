@@ -37,6 +37,10 @@ class GenericDefinition extends Model
         'parent',
     ];
 
+    protected $casts = [
+        '_id' => 'string',
+    ];
+
     /**
      * Scope to only get definitions.
      */

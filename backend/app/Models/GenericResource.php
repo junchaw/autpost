@@ -27,6 +27,10 @@ class GenericResource extends Model
         '_type',
     ];
 
+    protected $casts = [
+        '_id' => 'string',
+    ];
+
     /**
      * Scope to get resources of a specific type.
      */

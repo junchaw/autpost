@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronDown, Database, Eye, Plus, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Database, Eye, Plus, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -258,8 +258,8 @@ function DefinitionModal({
           fields: formData.fields,
         });
         toast.success('Definition created');
-      } else if (definition) {
-        await api.definitions.update(definition._id, {
+      } else if (definition?.id) {
+        await api.definitions.update(definition.id, {
           type: formData.type.trim(),
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
@@ -268,6 +268,9 @@ function DefinitionModal({
           fields: formData.fields,
         });
         toast.success('Definition updated');
+      } else {
+        toast.error('Cannot update: Definition ID is missing');
+        return;
       }
       onSave();
       onClose();
@@ -348,7 +351,7 @@ function DefinitionModal({
             <div className="grid grid-cols-2 gap-4 pt-2 border-t">
               <div>
                 <span className="text-sm text-base-content/60">ID</span>
-                <p className="font-mono text-sm">{definition._id}</p>
+                <p className="font-mono text-sm">{definition.id}</p>
               </div>
               {definition.created_at && (
                 <div>
@@ -391,7 +394,7 @@ export function GenericDefinitionsPage() {
   const [modalMode, setModalMode] = useState<'view' | 'create'>('view');
 
   // Delete confirmation
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
   const loadDefinitions = useCallback(async () => {
     setLoading(true);
@@ -427,22 +430,47 @@ export function GenericDefinitionsPage() {
     loadFieldTypes();
   }, [loadDefinitions, loadFieldTypes]);
 
+  // Cancel delete confirmation when clicking elsewhere
+  useEffect(() => {
+    if (confirmingDeleteId === null) return;
+
+    const handleClickOutside = () => {
+      setConfirmingDeleteId(null);
+    };
+
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [confirmingDeleteId]);
+
   const openModal = (def: GenericDefinition | null, mode: 'view' | 'create') => {
     setSelectedDefinition(def);
     setModalMode(mode);
     setModalOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
+  const handleDeleteClick = (id: string) => {
+    if (confirmingDeleteId === id) {
+      handleDelete(id);
+    } else {
+      setConfirmingDeleteId(id);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
     try {
-      await api.definitions.delete(deleteId);
+      await api.definitions.delete(id);
       toast.success('Definition deleted');
+      setConfirmingDeleteId(null);
       loadDefinitions();
     } catch {
       toast.error('Failed to delete definition');
-    } finally {
-      setDeleteId(null);
+      setConfirmingDeleteId(null);
     }
   };
 
@@ -491,7 +519,7 @@ export function GenericDefinitionsPage() {
                   </thead>
                   <tbody>
                     {definitions.map((def) => (
-                      <tr key={def._id}>
+                      <tr key={def.id}>
                         <td>
                           <span className="badge badge-primary font-mono">{def.type}</span>
                         </td>
@@ -501,27 +529,42 @@ export function GenericDefinitionsPage() {
                         </td>
                         <td>
                           <div className="flex gap-1">
-                            <button
-                              className="btn btn-ghost btn-xs"
-                              onClick={() => openModal(def, 'view')}
-                              title="View"
+                            <div className="tooltip" data-tip="View">
+                              <button
+                                className="btn btn-ghost btn-xs"
+                                onClick={() => openModal(def, 'view')}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="tooltip" data-tip="View Resources">
+                              <Link
+                                to={`/admin/resources/${def.type}`}
+                                className="btn btn-ghost btn-xs"
+                              >
+                                <Database className="w-4 h-4" />
+                              </Link>
+                            </div>
+                            <div
+                              className="tooltip"
+                              data-tip={
+                                confirmingDeleteId === def.id ? 'Click to confirm' : 'Delete'
+                              }
                             >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <Link
-                              to={`/admin/resources/${def.type}`}
-                              className="btn btn-ghost btn-xs"
-                              title="View Resources"
-                            >
-                              <Database className="w-4 h-4" />
-                            </Link>
-                            <button
-                              className="btn btn-ghost btn-xs text-error"
-                              onClick={() => setDeleteId(def._id)}
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                              <button
+                                className={`btn btn-ghost btn-xs ${confirmingDeleteId === def.id ? 'text-success' : 'text-error'}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteClick(def.id);
+                                }}
+                              >
+                                {confirmingDeleteId === def.id ? (
+                                  <Check className="w-4 h-4" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -545,29 +588,6 @@ export function GenericDefinitionsPage() {
         fieldTypes={fieldTypes}
         onSave={loadDefinitions}
       />
-
-      {/* Delete Confirmation */}
-      {deleteId && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">Confirm Delete</h3>
-            <p className="py-4">
-              Are you sure you want to delete this definition? This action cannot be undone.
-            </p>
-            <div className="modal-action">
-              <button className="btn" onClick={() => setDeleteId(null)}>
-                Cancel
-              </button>
-              <button className="btn btn-error" onClick={handleDelete}>
-                Delete
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setDeleteId(null)}>close</button>
-          </form>
-        </dialog>
-      )}
     </div>
   );
 }
