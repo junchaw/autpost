@@ -46,7 +46,7 @@ class RecurringTodoService
      */
     protected function parseTimeAhead(string $timeAhead): int
     {
-        if (!preg_match('/^(\d+)([smhdw])$/', strtolower($timeAhead), $matches)) {
+        if (! preg_match('/^(\d+)([smhdw])$/', strtolower($timeAhead), $matches)) {
             Log::warning("Invalid timeAhead format: {$timeAhead}, defaulting to 7d");
 
             return 7 * 24 * 60 * 60;
@@ -82,7 +82,7 @@ class RecurringTodoService
 
             $existingTodo = $this->checkExistingTodo($recurringTodo, $occurrenceDate);
 
-            if (!$existingTodo) {
+            if (! $existingTodo) {
                 Todo::create([
                     'user_id' => $recurringTodo->user_id,
                     'recurring_todo_id' => $recurringTodo->id,

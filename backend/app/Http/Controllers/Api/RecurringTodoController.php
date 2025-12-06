@@ -344,7 +344,7 @@ class RecurringTodoController extends Controller
         $generatedCount = $service->generate($timeAhead);
 
         return response()->json([
-            'message' => "Generated {$generatedCount} todo" . ($generatedCount === 1 ? '' : 's'),
+            'message' => "Generated {$generatedCount} todo".($generatedCount === 1 ? '' : 's'),
             'time_ahead' => $timeAhead,
             'generated_count' => $generatedCount,
         ]);

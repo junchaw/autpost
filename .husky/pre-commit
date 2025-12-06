@@ -4,3 +4,6 @@ cd ..
 
 # Run frontend lint-staged
 npx lint-staged
+
+# Add any files modified by formatters
+git add -u
