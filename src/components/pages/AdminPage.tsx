@@ -1,22 +1,15 @@
-import {
-  ArrowLeft,
-  BookOpen,
-  Database,
-  FileText,
-  LayoutDashboard,
-  Shield,
-  Wrench,
-} from 'lucide-react';
+import { BookOpen, Database, FileText, Home, Shield, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Banner } from '../layout/Banner';
 
-interface AdminLinkProps {
+interface PageLink {
   to: string;
-  icon: React.ReactNode;
   title: string;
   description: string;
+  icon: React.ReactNode;
 }
 
-function AdminLink({ to, icon, title, description }: AdminLinkProps) {
+function PageLinkCard({ to, icon, title, description }: PageLink) {
   return (
     <Link
       to={to}
@@ -36,62 +29,78 @@ function AdminLink({ to, icon, title, description }: AdminLinkProps) {
 }
 
 export function AdminPage() {
+  const navigationPages: PageLink[] = [
+    {
+      to: '/',
+      title: 'Home',
+      description: 'Go to home page',
+      icon: <Home className="w-6 h-6" />,
+    },
+    {
+      to: '/docs',
+      title: 'API Documentation',
+      description: 'View API documentation',
+      icon: <BookOpen className="w-6 h-6" />,
+    },
+  ];
+
+  const adminPages: PageLink[] = [
+    {
+      to: '/admin/access-logs',
+      title: 'Access Logs',
+      description: 'View and manage access logs',
+      icon: <FileText className="w-6 h-6" />,
+    },
+    {
+      to: '/admin/roles',
+      title: 'Roles & Permissions',
+      description: 'Manage roles and role bindings',
+      icon: <Shield className="w-6 h-6" />,
+    },
+    {
+      to: '/admin/definitions',
+      title: 'Generic Schema Definitions',
+      description: 'Manage generic resource schemas',
+      icon: <Database className="w-6 h-6" />,
+    },
+  ];
+
+  const devToolsPages: PageLink[] = [
+    {
+      to: '/admin/dev-tools',
+      title: 'Dev Tools',
+      description: 'Developer tools and utilities',
+      icon: <Wrench className="w-6 h-6" />,
+    },
+  ];
+
+  const PageSection = ({ title, pages }: { title: string; pages: PageLink[] }) => (
+    <div className="mb-8">
+      <h2 className="text-xl font-semibold mb-4 text-base-content/80">{title}</h2>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {pages.map((link) => (
+          <PageLinkCard key={link.to} {...link} />
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-base-200">
-      {/* Header */}
-      <div className="navbar bg-base-100 shadow-sm">
-        <div className="flex-1 gap-2">
-          <Link to="/dashboard" className="btn btn-ghost btn-sm">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <h1 className="text-xl font-bold">Admin</h1>
-        </div>
-      </div>
-
+      <Banner />
       <div className="container mx-auto p-4 max-w-4xl">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <AdminLink
-            to="/dashboard"
-            icon={<LayoutDashboard className="w-6 h-6" />}
-            title="Dashboard"
-            description="Go to main dashboard"
-          />
-
-          <AdminLink
-            to="/admin/access-logs"
-            icon={<FileText className="w-6 h-6" />}
-            title="Access Logs"
-            description="View and manage access logs"
-          />
-
-          <AdminLink
-            to="/admin/roles"
-            icon={<Shield className="w-6 h-6" />}
-            title="Roles & Permissions"
-            description="Manage roles and role bindings"
-          />
-
-          <AdminLink
-            to="/admin/definitions"
-            icon={<Database className="w-6 h-6" />}
-            title="Generic Schema Definitions"
-            description="Manage generic resource schemas"
-          />
-
-          <AdminLink
-            to="/admin/dev-tools"
-            icon={<Wrench className="w-6 h-6" />}
-            title="Dev Tools"
-            description="Developer tools and utilities"
-          />
-
-          <AdminLink
-            to="/docs"
-            icon={<BookOpen className="w-6 h-6" />}
-            title="API Documentation"
-            description="View API documentation"
-          />
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Admin</h1>
+          <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
+            Administrative tools and settings for managing the application.
+          </p>
         </div>
+
+        <PageSection title="Navigation" pages={navigationPages} />
+
+        <PageSection title="Admin" pages={adminPages} />
+
+        <PageSection title="Dev Tools" pages={devToolsPages} />
       </div>
     </div>
   );

@@ -54,15 +54,10 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <Routes>
-      {/* Public index page */}
-      <Route
-        path="/"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <IndexPage />}
-      />
+      {/* Index page */}
+      <Route path="/" element={<IndexPage />} />
 
       {/* Auth routes */}
       <Route
