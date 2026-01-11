@@ -1,14 +1,4 @@
-import {
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Eye, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -18,79 +8,16 @@ interface AccessLogModalProps {
   isOpen: boolean;
   onClose: () => void;
   accessLog: AccessLog | null;
-  mode: 'view' | 'edit' | 'create';
-  onSave: () => void;
 }
 
-function AccessLogModal({ isOpen, onClose, accessLog, mode, onSave }: AccessLogModalProps) {
-  const [formData, setFormData] = useState({
-    source: '',
-    path: '',
-    ip: '',
-    user_agent: '',
-  });
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (isOpen && accessLog && mode !== 'create') {
-      setFormData({
-        source: accessLog.source,
-        path: accessLog.path,
-        ip: accessLog.ip,
-        user_agent: accessLog.user_agent,
-      });
-    } else if (mode === 'create') {
-      setFormData({ source: '', path: '', ip: '', user_agent: '' });
-    }
-    setErrors({});
-  }, [isOpen, accessLog, mode]);
-
-  const handleSave = async () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.source.trim()) newErrors.source = 'Source is required';
-    if (!formData.path.trim()) newErrors.path = 'Path is required';
-    if (!formData.ip.trim()) newErrors.ip = 'IP is required';
-    if (!formData.user_agent.trim()) newErrors.user_agent = 'User agent is required';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setSaving(true);
-    try {
-      if (mode === 'create') {
-        await api.accessLogs.create(formData);
-        toast.success('Access log created');
-      } else if (mode === 'edit' && accessLog) {
-        await api.accessLogs.update(accessLog.id, formData);
-        toast.success('Access log updated');
-      }
-      onSave();
-      onClose();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  const isReadOnly = mode === 'view';
-  const title =
-    mode === 'create'
-      ? 'Create Access Log'
-      : mode === 'edit'
-        ? 'Edit Access Log'
-        : 'View Access Log';
+function AccessLogModal({ isOpen, onClose, accessLog }: AccessLogModalProps) {
+  if (!isOpen || !accessLog) return null;
 
   return (
     <dialog className="modal modal-open">
       <div className="modal-box max-w-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-lg">{title}</h3>
+          <h3 className="font-bold text-lg">View Access Log</h3>
           <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>
             <X className="w-4 h-4" />
           </button>
@@ -101,45 +28,21 @@ function AccessLogModal({ isOpen, onClose, accessLog, mode, onSave }: AccessLogM
             <label className="label">
               <span className="label-text">Source</span>
             </label>
-            <input
-              type="text"
-              className={`input input-bordered ${errors.source ? 'input-error' : ''}`}
-              value={formData.source}
-              onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-              readOnly={isReadOnly}
-              placeholder="e.g., web, api, mobile"
-            />
-            {errors.source && <span className="text-error text-sm mt-1">{errors.source}</span>}
+            <input type="text" className="input input-bordered" value={accessLog.source} readOnly />
           </div>
 
           <div className="form-control">
             <label className="label">
               <span className="label-text">Path</span>
             </label>
-            <input
-              type="text"
-              className={`input input-bordered ${errors.path ? 'input-error' : ''}`}
-              value={formData.path}
-              onChange={(e) => setFormData({ ...formData, path: e.target.value })}
-              readOnly={isReadOnly}
-              placeholder="e.g., /api/users"
-            />
-            {errors.path && <span className="text-error text-sm mt-1">{errors.path}</span>}
+            <input type="text" className="input input-bordered" value={accessLog.path} readOnly />
           </div>
 
           <div className="form-control">
             <label className="label">
               <span className="label-text">IP Address</span>
             </label>
-            <input
-              type="text"
-              className={`input input-bordered ${errors.ip ? 'input-error' : ''}`}
-              value={formData.ip}
-              onChange={(e) => setFormData({ ...formData, ip: e.target.value })}
-              readOnly={isReadOnly}
-              placeholder="e.g., 192.168.1.1"
-            />
-            {errors.ip && <span className="text-error text-sm mt-1">{errors.ip}</span>}
+            <input type="text" className="input input-bordered" value={accessLog.ip} readOnly />
           </div>
 
           <div className="form-control">
@@ -147,44 +50,28 @@ function AccessLogModal({ isOpen, onClose, accessLog, mode, onSave }: AccessLogM
               <span className="label-text">User Agent</span>
             </label>
             <textarea
-              className={`textarea textarea-bordered h-24 ${errors.user_agent ? 'textarea-error' : ''}`}
-              value={formData.user_agent}
-              onChange={(e) => setFormData({ ...formData, user_agent: e.target.value })}
-              readOnly={isReadOnly}
-              placeholder="e.g., Mozilla/5.0..."
+              className="textarea textarea-bordered h-24"
+              value={accessLog.user_agent}
+              readOnly
             />
-            {errors.user_agent && (
-              <span className="text-error text-sm mt-1">{errors.user_agent}</span>
-            )}
           </div>
 
-          {accessLog && mode === 'view' && (
-            <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-              <div>
-                <span className="text-sm text-base-content/60">Created</span>
-                <p className="font-mono text-sm">
-                  {new Date(accessLog.created_at).toLocaleString()}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm text-base-content/60">Updated</span>
-                <p className="font-mono text-sm">
-                  {new Date(accessLog.updated_at).toLocaleString()}
-                </p>
-              </div>
+          <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+            <div>
+              <span className="text-sm text-base-content/60">Created</span>
+              <p className="font-mono text-sm">{new Date(accessLog.created_at).toLocaleString()}</p>
             </div>
-          )}
+            <div>
+              <span className="text-sm text-base-content/60">Updated</span>
+              <p className="font-mono text-sm">{new Date(accessLog.updated_at).toLocaleString()}</p>
+            </div>
+          </div>
         </div>
 
         <div className="modal-action">
           <button className="btn" onClick={onClose}>
-            {isReadOnly ? 'Close' : 'Cancel'}
+            Close
           </button>
-          {!isReadOnly && (
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-              {saving ? <span className="loading loading-spinner loading-sm" /> : 'Save'}
-            </button>
-          )}
         </div>
       </div>
       <form method="dialog" className="modal-backdrop">
@@ -209,10 +96,6 @@ export function AccessLogPage() {
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<AccessLog | null>(null);
-  const [modalMode, setModalMode] = useState<'view' | 'edit' | 'create'>('view');
-
-  // Delete confirmation
-  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const loadLogs = useCallback(async () => {
     setLoading(true);
@@ -249,23 +132,9 @@ export function AccessLogPage() {
     setCurrentPage(1);
   };
 
-  const openModal = (log: AccessLog | null, mode: 'view' | 'edit' | 'create') => {
+  const openModal = (log: AccessLog) => {
     setSelectedLog(log);
-    setModalMode(mode);
     setModalOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    try {
-      await api.accessLogs.delete(deleteId);
-      toast.success('Access log deleted');
-      loadLogs();
-    } catch {
-      toast.error('Failed to delete access log');
-    } finally {
-      setDeleteId(null);
-    }
   };
 
   const totalPages = pagination ? Math.ceil(pagination.total / pagination.per_page) : 1;
@@ -279,12 +148,6 @@ export function AccessLogPage() {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <h1 className="text-xl font-bold">Access Logs</h1>
-        </div>
-        <div className="flex-none">
-          <button className="btn btn-primary btn-sm" onClick={() => openModal(null, 'create')}>
-            <Plus className="w-4 h-4" />
-            Add Log
-          </button>
         </div>
       </div>
 
@@ -384,29 +247,13 @@ export function AccessLogPage() {
                         </td>
                         <td className="text-sm">{new Date(log.created_at).toLocaleString()}</td>
                         <td>
-                          <div className="flex gap-1">
-                            <button
-                              className="btn btn-ghost btn-xs"
-                              onClick={() => openModal(log, 'view')}
-                              title="View"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button
-                              className="btn btn-ghost btn-xs"
-                              onClick={() => openModal(log, 'edit')}
-                              title="Edit"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              className="btn btn-ghost btn-xs text-error"
-                              onClick={() => setDeleteId(log.id)}
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                          <button
+                            className="btn btn-ghost btn-xs"
+                            onClick={() => openModal(log)}
+                            title="View"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -453,32 +300,7 @@ export function AccessLogPage() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         accessLog={selectedLog}
-        mode={modalMode}
-        onSave={loadLogs}
       />
-
-      {/* Delete Confirmation */}
-      {deleteId && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">Confirm Delete</h3>
-            <p className="py-4">
-              Are you sure you want to delete this access log? This action cannot be undone.
-            </p>
-            <div className="modal-action">
-              <button className="btn" onClick={() => setDeleteId(null)}>
-                Cancel
-              </button>
-              <button className="btn btn-error" onClick={handleDelete}>
-                Delete
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setDeleteId(null)}>close</button>
-          </form>
-        </dialog>
-      )}
     </div>
   );
 }

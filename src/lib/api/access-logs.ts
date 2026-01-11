@@ -11,20 +11,6 @@ export interface AccessLog {
   updated_at: string;
 }
 
-export interface CreateAccessLogInput {
-  source: string;
-  path: string;
-  ip: string;
-  user_agent: string;
-}
-
-export interface UpdateAccessLogInput {
-  source?: string;
-  path?: string;
-  ip?: string;
-  user_agent?: string;
-}
-
 export interface AccessLogListParams {
   page?: number;
   perPage?: number;
@@ -48,21 +34,4 @@ export const accessLogsApi = {
   },
 
   get: (id: number) => fetchApi<{ access_log: AccessLog }>(`/access-logs/${id}`),
-
-  create: (data: CreateAccessLogInput) =>
-    fetchApi<{ message: string; access_log: AccessLog }>('/access-logs', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  update: (id: number, data: UpdateAccessLogInput) =>
-    fetchApi<{ message: string; access_log: AccessLog }>(`/access-logs/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
-
-  delete: (id: number) =>
-    fetchApi<{ message: string }>(`/access-logs/${id}`, {
-      method: 'DELETE',
-    }),
 };

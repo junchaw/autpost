@@ -88,13 +88,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}/force', [NoteController::class, 'forceDelete'])->middleware('permission:'.Permission::HARD_DELETE);
     });
 
-    // Access Log routes
+    // Access Log routes (read-only, logs are created by middleware)
     Route::prefix('access-logs')->group(function () {
         Route::get('/', [AccessLogController::class, 'index']);
-        Route::post('/', [AccessLogController::class, 'store']);
         Route::get('/{id}', [AccessLogController::class, 'show']);
-        Route::put('/{id}', [AccessLogController::class, 'update']);
-        Route::delete('/{id}', [AccessLogController::class, 'destroy']);
     });
 
     // Role routes
