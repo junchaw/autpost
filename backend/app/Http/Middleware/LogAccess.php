@@ -34,6 +34,11 @@ class LogAccess
      */
     protected function logAccess(Request $request): void
     {
+        // Check if access logging is enabled
+        if (! config('autpost.access_log.enabled', true)) {
+            return;
+        }
+
         $path = $request->path();
 
         // Skip logging for excluded paths

@@ -5,6 +5,7 @@ Welcome to the Autpost documentation. This index provides quick access to all do
 ## Project Documentation
 
 - [Development Guide](./DEVELOPMENT_GUIDE.md) - API patterns, soft delete, and coding conventions
+- [Configuration](./CONFIGURATION.md) - Feature flags and configuration options
 - [Local Environment](./LOCAL_ENVIRONMENT.md) - Local development setup with Docker
 - [Deployment](./DEPLOYMENT.md) - Production deployment guide
 - [Dependencies](./DEPENDENCIES.md) - PHP and JavaScript dependencies with links
